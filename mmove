@@ -1,0 +1,15 @@
+#!/bin/zsh
+#set -x
+wid=$(xdotool search --pid $(pidof -s mplayer) 2>/dev/null)
+xord=600
+yord=0
+eyord=$(xwininfo -id $wid  | /bin/grep -i "Absolute upper-left Y" | cut -d ":" -f 2| tr -d '[:space:]' )
+if [[ $eyord == "0" ]];then
+    yord=200
+elif [[ $eyord == "200" ]];then
+    yord=506
+elif [[ $eyord == "506" ]];then
+    yord=0
+fi
+xdotool windowmove $wid $xord $yord
+#set +x

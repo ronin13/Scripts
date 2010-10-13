@@ -1,0 +1,6 @@
+#!/bin/zsh
+fpid=$(pidof plugin-container)
+
+fd=$(lsof | grep 22834 | grep dele | awk '{print $4 }')
+
+mplayer /proc/$fpid/fd/${fd[1,2]}

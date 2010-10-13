@@ -1,0 +1,39 @@
+#!/usr/bin/env perl
+
+use Tie::File;
+use IO::Handle;
+$FPATH="$ENV{'HOME'}/logs/consume.log";
+
+open OUTPUT, '>', $FPATH or die $!;
+open ERROR,  '>', $FPATH  or die $!;
+
+STDOUT->fdopen( \*OUTPUT, 'w' ) or die $!;
+STDERR->fdopen( \*ERROR,  'w' ) or die $!;
+
+$filename=$ARGV[0];
+#print $filename;
+my @lines;
+my $crumb;
+
+tie @lines, 'Tie::File', $filename or die "Tieing failed : $!";
+if (scalar(@lines) == 0){
+    untie @lines;
+    print "Gulp! Nothing more to consume";
+    exit 127;
+}
+
+$counter = 0;
+foreach(@lines){
+    $counter++;
+    if(/^[^%]/){
+        # First non consumed line
+        $crumb = $_; 
+        s/^/%/;
+        last;
+    }
+}
+untie @lines;
+#print $crumb;
+chomp($crumb);
+$crumb and system($crumb) == 0 or print "$crumb execution failed $!";
+

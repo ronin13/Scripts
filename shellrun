@@ -1,0 +1,7 @@
+#!/bin/zsh -f
+source ~/.zsh/.zsh_functions
+source ~/.zsh/functions
+source ~/.zsh/.zsh_aliases
+
+${=@}
+

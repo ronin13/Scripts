@@ -1,0 +1,7 @@
+#!/bin/zsh
+if ! ~/bin/downloadStats 1;then
+    shellrun download "$@"
+else
+    echo "shellrun download $@" >> ~/.dque
+fi
+

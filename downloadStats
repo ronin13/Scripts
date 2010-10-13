@@ -1,0 +1,16 @@
+#!/bin/zsh
+#set -x
+ariaStats=$(aria2mon | grep GID | perl -lne 'print $1 if /(\d+%)/'| sed -e 's/^/:/') || ""
+torrentStats=$(~/.rtorrent/torrentStats ~/.rtorrent/xmlrpc2scgi.py ~/.rtorrent/rpc.socket 2>/dev/null | grep "Done:" | cut -d " " -f 2 | sed -e 's/^/:/' ) || ""
+([[ ! -z $ariaStats ]] || [[ ! -z $torrentStats ]]) && echo "${ariaStats}\\${torrentStats}"
+
+if [[ (! -t 1) && -z $1 ]];then
+    exit 0
+fi
+
+if [[ -z $ariaStats && -z $torrentStats ]];then
+    exit 1
+else
+    exit 0
+fi
+    #set +x

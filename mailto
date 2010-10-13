@@ -1,0 +1,27 @@
+#!/bin/zsh
+# Depends on url-utils package and zenity
+mailto="${1%\?*}"
+subject="$(urldecode <<<${${${1#*\?}%&*}#*=})"
+body="$(urldecode <<<${${${1#*\?}#*&}#*=})"
+
+zenity --question --height 400 --width 680 --cancel-label --text "Send mail with subject $subject ?"
+
+[[ $? -eq 1 ]] && exit
+
+echo -e "\nDate: $(date -R)
+Mailto: $mailto
+Subject: $subject
+Body: $body\n" >>| ~/logs/mailto.log
+
+
+if [[ ! -z "$body" ]];then
+    /usr/bin/mutt -s "$subject" "$mailto" <<<"$body"
+else
+    urxvt -e /usr/bin/mutt -s "$subject" "$mailto"
+fi
+
+if [[ $? eq 1 ]];then
+    ~/bin/notify-send "Something went wrong..oops"
+else
+    ~/bin/notify-send "Mail with $subject successfully sent"
+fi

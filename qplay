@@ -1,0 +1,53 @@
+#!/bin/zsh
+
+#set -x
+hist=0
+OIFS="$IFS"
+IFS='
+'
+lartist=$(mpc list artist)
+lalbum=$(mpc list album)
+xartist=$(for line in $lartist[(f)1,-1];do echo "artist $line";done| tr -d ';' | sort -k 2 -f -u)
+xalbum=$(for line in $lalbum[(f)1,-1];do echo "album $line";done | tr -d ';' | sort -k 2 -f -u)
+xhistory=$(tac ~/.mpd/.empd)
+
+IFS="$OIFS"
+term=`echo -e "$xartist\n$xalbum\n$xhistory" | ${=DMENU}`
+[[ -z $term ]] && exit
+
+#echo $term
+if [[ $term == \;* ]];then
+    hist=1
+fi
+
+term=${term#;}
+mtype="$term[(w)1]"
+media="$term[(w)2,(w)-1]"
+
+
+if [[ $term == *: ]];then
+    last=$(mpc playlist | wc -l)
+    if [[ $term == playlist* ]];then
+        hist=1
+        mpc load $mtype
+    else
+        mpc search $mtype "${media%:}" | mpc add
+    fi
+    mpc play $(($last + 1))
+    mpc pause
+else
+    plist=$(mpc playlist | awk -F '-' '{ print substr($1,0,20) }' | sort  -u -R | head -3 | tr '\n' ' ')
+    token=$RANDOM
+    echo ";playlist.$token $plist" >> ~/.mpd/.empd
+    mpc save playlist.$token
+    mpc clear
+    if [[ $term == playlist* ]];then
+        hist=1
+        mpc load $mtype
+    else
+        mpc search $mtype "$media" | mpc add
+    fi
+fi
+[[ $hist == 0 ]] && echo ";${term%:}" >> ~/.mpd/.empd
+notify-send "Em-pee-dee" "$term added...."
+#set +x

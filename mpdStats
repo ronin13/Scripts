@@ -1,0 +1,4 @@
+#!/bin/zsh
+mpc status | tr '\n' '@' | perl -lne 'print substr($1,0,45).qq/ $2/  if m{^(.+)@\Q[\E.+(\d+:\d+/\d+:\d+)}'
+
+

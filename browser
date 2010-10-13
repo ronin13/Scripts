@@ -1,0 +1,56 @@
+#!/bin/zsh
+# The main browser script
+#set -x
+URL="$1"
+if [[ $URL == (#i)(*.jpg|*.png|*.jpeg) ]];then 
+    feh -j ~/.local/share/feh/ -k "$URL"
+    exit
+fi
+
+if [[ $URL == *youtube.com/watch* ]];then
+    DFILE=
+    trap 'rm $DFILE;kill $$' TERM
+    trap '~/bin/mplayeraux stop' INT
+    tubeplay $URL
+    sleep 2
+    DFILE=$(ls -Acr |tail -1)
+    export DFILE
+    exit
+fi
+
+if [[ $URL == (#i)(*.mp3|*.ogg) ]];then
+    #echo "$URL" | mpc add
+    localf="${URL:t}"
+    /usr/bin/wget -O - $URL | tee /media/Vanguard/media/online/$localf | /usr/bin/mplayer -cache 4096 -cache-min 40 "$URL"
+    exit
+fi
+
+#num1=$(wmctrl -l | grep uake | awk '{ print $2 }')
+num1=$(wmctrl -d | grep "\*" | cut -d " " -f 1)
+num2=$(wmctrl -l | /bin/grep Vimper | awk '{ print $2 }')
+
+#echo $num1,$num2,`cat /proc/$$/cmdline` >| /tmp/testb
+
+OB="firefox-beta-bin"
+isrxvt=0
+URL="$1"
+
+if [[ $0 == *ubrowser ]];then
+    isrxvt=1
+fi
+#echo $isrxvt, $URL,$0,$OB,$TBROWSER,$BROWSER >| /tmp/testb
+
+isrxvt=0
+if [[ $URL == http://tinyurl* || $num1 == $num2 || ((! -t 1) && $isrxvt == 0) ]];then
+    OB="$BROWSER"
+    $OB -remote "openurl($URL)"
+    #$OB "$URL"
+else
+    OB="$TBROWSER"
+    #tmux new-window -t uake: "$TBROWSER $URL"\; split-window -d
+    tmux new-window -a -d -t uake: "echo -e '\a'; $OB $URL"
+fi
+
+# The above commands are supposed to return and not block.
+echo $OB
+#set +x

@@ -1,0 +1,27 @@
+#!/bin/zsh
+#set -x
+url=$1
+DDIR="$HOME/.local/share/diditchange"
+[[ ! -d $DDIR ]] && mkdir -p  $DDIR
+
+file=$(tr  '/' '.' <<< ${url##*//})
+tfile=`mktemp`
+#curl -s $website
+#echo $website
+if [[ ! -f ${DDIR}/$file ]];then
+    curl -s $url | md5sum > ${DDIR}/$file
+    ~/bin/diditchange $url
+else
+    source ~/.zsh/.zsh_functions
+    curl -s  $url  | md5sum >| $tfile
+
+    if ! /usr/bin/diff $tfile ${DDIR}/$file; then
+       cp $tfile ${DDIR}/$file
+       mecho "Site  $url has changed"
+    else
+       mecho "No difference !"
+       exit 1
+    fi
+fi
+rm $tfile
+#set +x

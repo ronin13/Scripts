@@ -1,0 +1,18 @@
+#!/bin/zsh
+daemons=($@)
+#print -l $daemons
+
+while :
+do
+    for d in $daemons
+    do
+            if [[ -f /var/run/daemons/$d ]] && ! ps auxww | /bin/grep -i $d | grep -v mnger |  grep -v grep &>/dev/null
+            then
+                    echo "Restarting service $d..."
+                    sudo /etc/rc.d/$d stop
+                    sleep 5
+                    sudo /etc/rc.d/$d start
+            fi
+    done
+    sleep 120
+done

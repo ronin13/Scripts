@@ -1,0 +1,5 @@
+#!/bin/bash
+status=`acpi -b`
+if grep 'Discharg' <<< $status;then
+echo "On Battery: $(cut -d ':' -f 2 <<< $status) |"
+fi
