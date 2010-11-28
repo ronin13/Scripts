@@ -1,6 +1,8 @@
 #!/bin/zsh
 
 #set -x
+export yprofile="qplay"
+setopt shwordsplit
 hist=0
 OIFS="$IFS"
 IFS='
@@ -12,7 +14,7 @@ xalbum=$(for line in $lalbum[(f)1,-1];do echo "album $line";done | tr -d ';' | s
 xhistory=$(tac ~/.mpd/.empd)
 
 IFS="$OIFS"
-term=`echo -e "$xartist\n$xalbum\n$xhistory" | ${=DMENU}`
+term=`echo -e "$xartist\n$xalbum\n$xhistory" | ${(e)=YDMENU}`
 [[ -z $term ]] && exit
 
 #echo $term
