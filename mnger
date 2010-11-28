@@ -14,5 +14,11 @@ do
                     sudo /etc/rc.d/$d start
             fi
     done
-    sleep 120
+    sleep 60
+    # Heartbeat for flash
+    cpu=$(top -b -n 1 | grep plugin-cont | head -1 | awk '{ print $9 }')
+    if [[ -n $cpu && $cpu -gt 2 ]];then
+         xdotool key ctrl
+    fi
+    sleep 60
 done

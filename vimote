@@ -1,0 +1,64 @@
+#!/bin/zsh
+#set -x
+
+session="uake"
+session_file="$HOME/.vim-tmp/vimote-session"
+
+if ! pgrep -x vim &>/dev/null;then 
+    lastone=$(( $(tmux list-windows -t $session | wc -l)/2 + 3 )) 
+    tmux new-window -d -t $session:$lastone "/usr/bin/vim -S $session_file"
+    tmux join-pane -s $session:$lastone -p 80
+    exit
+else
+    winum=$(~/bin/tux tnum vim)
+fi
+
+if [[ $? != 0 ]];then 
+	print "Failed"
+        return
+fi
+#set +x
+
+command=${1:-tabnew}
+
+
+if [[ $command == down ]];then
+    keys=":mksession! ~/.vim-tmp/vimote-session" 
+    tmux send-keys -t uake:$winum 'Escape' $keys 'Enter' 'Escape' ':wqa' 'Enter'
+    exit
+fi
+
+keys=""
+shift
+
+
+# Non join commands here
+if ! (( $# ));then
+    keys="$command"
+    tmux send-keys -t uake:$winum 'Escape' $keys 'Enter'
+    exit
+fi
+
+for f in $@;do
+    if [[ -f  ~/.vim-tmp/${f:t}.swp ]];then
+        keys=":TabX $f"
+    else
+        if [[ "$f" == /* ]];then
+            prefix=
+        else
+            prefix="$(pwd)/"
+        fi
+        f="${prefix}$f"
+        if [[ $command == tabnew ]];then
+            keys=":tabnew $f"
+        elif [[ $command == edit ]];then
+            keys=":edit $f"
+        fi
+    fi
+    tmux send-keys -t uake:$winum 'Escape' $keys 'Enter'
+done
+
+# Wrong -- dont do it here
+tmux join-pane -s uake:$winum -p 75 
+
+#set +x

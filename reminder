@@ -2,12 +2,14 @@
 #sleep 60
 export DISPLAY=":0"
 tasks="$(/bin/ls -A ~/.tasks/*.remain 2>/dev/null | wc -l)"
-cookie="$(fortune -n 200 -a -s matrix calvin house computers paradoxum issa-haiku humorists archlinux lorquotes debian goedel literature tbbt perl startrek the-godfather science linux linuxcookie wisdom | tr -d '<' | tr '>' ':')"
-~/bin/notify-send "Reminder" "Tasks left: <b>$tasks</b>
+cookie="$(fortune -n 200 -a -s matrix calvin house computers paradoxum issa-haiku humorists archlinux linuxcookie debian goedel literature tbbt perl startrek the-godfather science linux  wisdom | tr -d '<' | tr '>' ':')"
 
-<i>$(date -R)</i>
-----------------------
-$cookie"
+#~/bin/notify-send "Reminder" "Tasks left: <b>$tasks</b>
+
+#<i>$(date -R)</i>
+#----------------------
+#$cookie"
+~/bin/notify-send "Reminder" "^i(/home/raghavendra/.notify-icons/reminder.xpm)Tasks left:$tasks | $(date -R) | $cookie"
 exit 0
 #sleep 2
 #mtasks="

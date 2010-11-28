@@ -1,6 +1,14 @@
 #!/bin/zsh
-url=$(awk '{ print NR" "$0 }' ~/.speed | ${=DMENU} | awk '{ print $2 }')
-[[ -z $url ]] && exit
+export yprofile="speed"
+
+while :;do
+
+    url=$(awk '{ print NR" "$0 }' ~/.speed | ${(e)=YDMENU} | awk '{ print $2 }')
+    [[ -z $url ]] && exit
+    ~/bin/browser "$url"
+
+done
+
 #uzbl-browser $url &>/dev/null
 #$BROWSER $url
-~/bin/browser "$url"
+

@@ -1,0 +1,11 @@
+#!/bin/zsh
+
+unsetopt dotglob
+
+for f in **/*~build(.);do
+    if file $f | grep -q python2;then
+        echo "Python file $f"
+        2to3 $f | patch -N $f  &&  sed -i -e 's|#!/usr/bin/env python2|#!/usr/bin/env python|' $f
+    fi
+done
+

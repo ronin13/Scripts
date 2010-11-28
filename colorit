@@ -1,0 +1,30 @@
+#!/bin/zsh
+autoload -U colors
+colors
+#set -x
+words="$@"
+: ${(A)elements:=${(z)words}}
+while read LINE
+do
+   string=""
+   #LINE="${LINE// /%}"
+   #print $LINE
+   for word in ${=LINE}
+   do
+        color="39"
+        word=${(q)word}
+        #set -x
+        if (( ${+elements[(r)*(#i)$word*]} ));then
+            temp=${elements[(r)$word:*]}
+            if [[ $temp == *:* ]];then 
+             color=${temp#*:}
+            fi
+            string+="%{%B%K{233}%F{$color}%}$word%{$reset_color%} "
+        else
+            string+="$word "
+        fi
+        #set +x
+   done
+  print -P $string
+done
+#set +x

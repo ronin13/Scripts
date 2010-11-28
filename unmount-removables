@@ -1,0 +1,35 @@
+#!/bin/bash
+
+
+PREF="disk/by-uuid"
+
+if [[ $1 = "12" || $1 = "" ]];then
+sudo umount /dev/$PREF/e7222c5f-0a7e-4851-96e9-4d8fa3d8377d    # Muzak
+sudo umount /dev/$PREF/09d18cc1-c402-41f4-be1b-eb856934ed45
+sudo umount /dev/$PREF/dda1a7b6-445f-47e6-8acb-241ef92b9ff4 # Torino
+sudo umount /dev/$PREF/8EA0237FA0236CC1 # Scintilla
+sudo umount /dev/$PREF/E4347ED8347EACE4 # Iota
+sudo umount /dev/$PREF/B894127A94123B78 # Multimedia
+sudo umount /dev/$PREF/34663080-89e7-4af9-a6e4-d3fa7ebb3a50 #Departe
+sudo umount /dev/$PREF/1f46e95c-306f-4f5d-80e5-176d4b2ea5fc 
+sudo umount /dev/$PREF/2a3366a9-ceb4-40b3-8acd-932c98b871c1 
+fi
+
+
+if [[ $1 = "1" ]];then
+sudo umount /dev/$PREF/8EA0237FA0236CC1 # Scintilla
+sudo umount /dev/$PREF/E4347ED8347EACE4 # Iota
+sudo umount /dev/$PREF/B894127A94123B78 # Multimedia
+fi
+
+if [[ $1 = "2" ]];then
+sudo umount /dev/$PREF/e7222c5f-0a7e-4851-96e9-4d8fa3d8377d    # Muzak
+sudo umount /dev/$PREF/09d18cc1-c402-41f4-be1b-eb856934ed45    # Titan
+sudo umount /dev/$PREF/dda1a7b6-445f-47e6-8acb-241ef92b9ff4  # Torino
+sudo umount /dev/$PREF/34663080-89e7-4af9-a6e4-d3fa7ebb3a50 # Departe
+sudo umount /dev/$PREF/1f46e95c-306f-4f5d-80e5-176d4b2ea5fc 
+fi
+
+
+mount | egrep -v "(none|gvfs)" | cut -d " " -f 1 | sort -t "/" -k 2
+

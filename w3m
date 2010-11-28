@@ -1,0 +1,40 @@
+#!/bin/zsh
+#set -x
+
+session="uake"
+own=$$
+
+if [[ -z $TMUX || $1 == -f ]];then
+    [[ $1 == -f ]] && shift
+    /usr/bin/w3m "$@"
+fi
+
+if ! ps auxww | =grep -i w3m | =grep -v $own |  =grep -vq grep;then 
+    lastone=$(( $(tmux list-windows -t $session | wc -l)/2 + 3 )) 
+    tmux new-window -d -t $session:$lastone "/usr/bin/w3m lwn.net"
+    tmux join-pane -s $session:$lastone -p 80
+    exit
+else
+    winum=$(~/bin/tux tnum w3m)
+fi
+
+if [[ $? != 0 ]];then 
+	print "Failed"
+        return
+fi
+#set +x
+
+
+
+keys=""
+
+for f in $@;do
+    tmux send-keys -t uake:$winum 'C-c' 'T' "$f" 'Enter'
+done
+
+if [[ -t 0 ]];then
+    tmux join-pane -s uake:$winum -p 75 
+else
+    tmux select-window -t uake:$winum  
+fi
+#set +x

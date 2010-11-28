@@ -1,0 +1,10 @@
+#!/bin/zsh
+
+src="$1"
+dest=$2
+
+if [[ ! -d $dest ]];then
+    exit 1
+fi
+
+mv -u "$src" "$dest" || exit 1

@@ -1,9 +1,8 @@
 #!/bin/zsh
-#set -x
-ariaStats=$(aria2mon | grep GID | perl -lne 'print $1 if /(\d+%)/'| sed -e 's/^/:/') || ""
+#setopt shwordsplit
+ariaStats=$(aria2mon | grep GID | perl -lne 'print $1 if /(ETA:.+)/') || ""
 torrentStats=$(~/.rtorrent/torrentStats ~/.rtorrent/xmlrpc2scgi.py ~/.rtorrent/rpc.socket 2>/dev/null | grep "Done:" | cut -d " " -f 2 | sed -e 's/^/:/' ) || ""
-([[ ! -z $ariaStats ]] || [[ ! -z $torrentStats ]]) && echo "${ariaStats}\\${torrentStats}"
-
+([[ ! -z $ariaStats ]] || [[ ! -z $torrentStats ]]) && echo "${ariaStats} \\ ${torrentStats}"
 if [[ (! -t 1) && -z $1 ]];then
     exit 0
 fi

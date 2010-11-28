@@ -1,0 +1,81 @@
+#!/bin/zsh
+
+: ${(AA)muxaliases:=${(z)MUXAL}}
+: ${(AA)appMap:=${(z)WSETS}}
+
+arg="$1"
+
+if [[ $arg == "tnum" ]];then
+        shift
+        app="$1"
+        session=${appMap[$app]:-uake}
+
+        setopt nonomatch
+        if ! tmux list-windows -t $session | /bin/grep -i $app | grep -v grep &>/dev/null;then
+            lastone=$(( $(tmux list-windows -t $session | wc -l)/2 + 3 )) 
+            PATH="/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin:/home/raghavendra/bin"
+            if [[ ! -f =$app ]];then
+                tmux new-window -d -t $session:$lastone =$muxaliases[$app]
+            else
+                tmux new-window -d -t $session:$lastone =$app
+            fi
+            tmux join-pane -s $session:$lastone -p 80
+            exit 1
+        fi
+
+        winum=$(tmux list-windows -t $session | /bin/grep -i $app | head -1)
+
+        if [[ -z $winum ]];then
+            exit 1
+        fi
+
+        winum=${winum%:*}
+
+        echo -n $winum 
+
+elif [[ $arg == "tfind" ]];then
+        shift
+        app=${1:?param}
+
+
+        winum=$(tmux list-windows | agrep -1  "$app" | head -1)
+        winum=${winum%:*}
+
+        tmux select-window -t $winum
+
+
+elif [[ $arg == "tnext" ]];then
+       shift
+       while :;do
+           tmux next-window 
+           app=$(tmux display-message -p '#W')
+           [[ $app == "zsh" ]] && break
+       done
+elif [[ $arg == "tprev" ]];then
+       shift
+       while :;do
+           tmux previous-window
+           app=$(tmux display-message -p '#W')
+           [[ $app == "zsh" ]] && break
+       done
+
+elif [[ $arg == "tbreak" ]];then
+        shift
+        app=$(tmux display-message -p '#W')
+
+
+        if [[ -z $app || -z  $appMap[$app] ]];then
+            tmux break-pane -d 
+            exit
+        fi
+
+        if [[ $app == vim ]];then
+            vimote :wa 
+        fi
+
+        sum1=$(tmux list-windows | grep -v layout | awk -F: '{total+=$1} END {print total}')
+        tmux break-pane -d 
+        sum2=$(tmux list-windows | grep -v layout | awk -F: '{total+=$1} END {print total}')
+        window=$(( sum2-sum1 ))
+        tmux move-window -d  -s $window -t $appMap[$app]
+fi

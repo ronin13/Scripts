@@ -1,14 +1,16 @@
 #!/bin/zsh
 #set -x
+
 xnotify(){
     heading="$1"
     shift
     rest="$@"
-    /usr/bin/notify-send -t 10000 "$heading" "$rest"  #2>|/tmp/notifylog
+    text=$(echo "^fg(green)$heading[1,15]: ^fg(grey85)$rest" | perl -pe 'if (!eof()) { s/\n/ | /g }' | tr -dc '[:print:]' )
+    echo "$text" | dzen2  -p $duration -y -1 &!
 }
-
 cnotify(){
-muxSend a "echo $@"
+    tmux display-message '$@'
+    #muxSend a "echo $@ | head -1  | tr  '\n' ' | ' | tr -dc '[:print:]' "
 }
 
 type=xnotify
@@ -16,28 +18,106 @@ type=xnotify
 export DISPLAY=":0"
 pidof X &>/dev/null || type=cnotify
 
+NFILE="/home/raghavendra/.notify-counter"
 
-param="$1"
-mlog="$@"
+if [[ $1 == "-f" ]];then
+    shift
+    duration=2
+    $type "$@"
+    exit
+fi
 
-if [[ $0 == *aria* ]];then
+if [[ ! -f $NFILE ]];then
+    temp=$(date +%s)
+    echo -n "$temp|shot" >| $NFILE
+    njiffy=$temp
+    mode=shot
+else
+    temp=$(cat $NFILE)
+    njiffy=${temp%|*}
+    mode=${temp#*|}
+fi
+
+time=$(date +%s)
+
+difference=$(( $time - $njiffy ))
+
+if [[ $difference -lt 2 ]];then
+    #if [[ $mode == "batch" ]];then
+
+    if [[ ! $mode == "temper" ]];then
+        notify-send -f "Warning" "Too many notifications - check:/tmp/notifications"
+        mode="temper"
+    fi
+
+    echo -n "$time|$mode" >| $NFILE
+    echo "$(date -R): $@" >>| /tmp/notifications
+    exit
+elif [[ $difference -lt 10 ]];then
+    mode="batch"
+    duration=1
+else
+    mode="shot"
+    duration=7
+fi
+echo -n "$time|$mode" >| $NFILE
+#set +x
+
+
+prgm=$0
+
+if [[ -n $1 ]];then
+    param="${(qq)1}"
+    shift
+    mlog="${(qq)@}"
+    if [[ ! -t 0 ]];then
+        while read LINE
+        do
+            mlog="$mlog ${(qq)LINE}"
+        done
+    fi
+else
+    if [[  -t 0 ]];then
+        notify-send "Warning" "Wrong input"
+        exit
+    fi
+    param="Subject"
+    tempReply=""
+    while read LINE
+    do
+        tempReply="$tempReply ${(qq)LINE}"
+    done
+    echo -e "STDIN \n$(date '+%F %H:%M') ==> $param: $tempReply\n" >>| ~/.notify-history
+    $type "$param" "$tempReply"
+    exit
+fi
+
+if [[ $prgm == *aria* ]];then
     param="aria2c"
-    mlog="Aria2c: $(tail -1 ~/.download_history)"
+fi
+
+if [[ $prgm == *beuter* ]];then
+    mlog="^i(/home/raghavendra/.notify-icons/beuter.xpm)$param $mlog"
+    param="beuter"
 fi
 
 echo -e "\n$(date '+%F %H:%M') ==> $mlog\n" >> ~/.notify-history
 
 case $param in
     *rtorrent*)
-      $type "Torrent download" "$1 download complete!"
+        $type "Torrent download" "^i(/home/raghavendra/.notify-icons/torrent.xpm)$mlog download complete!"
       consume $HOME/.dque
       ;;
       *aria2c*)
         message=$(tail -1 ~/.download_history |cut -d ' ' -f 1 | cut -d : -f 2-)
-        $type "Aria2:" "${message:t}
-        <i>download complete</i>"
+        $type "Aria2:" "^i(/home/raghavendra/.notify-icons/download.xpm)${message:t}  download complete"
         consume $HOME/.dque
         ;;
-     *) $type "$param" "$@"
+    *beuter*)
+       $type "Newsbeuter" "$mlog"
+        ;;
+     *mail*)
+        $type "New Mail" "$mlog"
+         ;;
+     *) $type "$param" "$mlog"
 esac
-#set +x

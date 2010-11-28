@@ -1,0 +1,47 @@
+#!/bin/zsh
+
+type=${1:="sess"}
+
+
+if [[ $type == sess ]];then
+    export yprofile="dactyl-sess"
+    pushd ~/.dactyls/sessions
+    file=$(print -l *(om[1,-1]) | ${DMENU})
+        if [[ -n $file && $file == *: ]];then
+            while :;do
+                url=$($=DMENU < $file)
+                [[ -z $url ]] && break
+                firefox -new-tab $url[(w)1]
+            done
+        else
+            for line in $(cat $file);do
+                firefox -new-tab $line[(w)1]
+            done
+        fi
+    popd
+elif [[ $type == ist ]];then
+    export yprofile="dactyl-hist"
+    pushd ~/.dactyls/history/
+    #url=$(tac history | grep -v "about:blank" |  uniq |  ${(e)=YDMENU})
+    url=$(tac history | grep -v "about:" |  uniq |  $=DMENU)
+    [[ -n $url ]] && firefox -new-tab $url[(w)1]
+    popd
+elif [[ $type == speed ]];then
+    export yprofile="speed"
+    while :;do
+
+        url=$(awk '{ print NR" "$0 }' ~/.dactyls/speedy/speed | ${(e)=YDMENU} | awk '{ print $2 }')
+        [[ -z $url ]] && exit
+        firefox -new-tab "$url"
+
+    done
+elif [[ $type == lark ]];then
+    export yprofile="dactyl-lark"
+    while :;do
+
+        url=$(awk '{ print NR" "$0 }' ~/.dactyls/bmark/larks | ${(e)=YDMENU} | awk '{ print $2 }')
+        [[ -z $url ]] && exit
+        firefox -new-tab  "$url"
+
+    done
+fi

@@ -1,0 +1,17 @@
+#!/bin/zsh
+
+failed()
+{
+echo "Failed"
+exit 1
+}
+
+sync
+sleep 3
+unmount-removables || failed
+sleep 2
+vimote down
+sleep 5
+killall -w mutt newsbeuter firefox 
+sleep 1
+shutdown -h now

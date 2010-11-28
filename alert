@@ -1,0 +1,13 @@
+#!/bin/zsh
+#set -x
+needed=$(/bin/df -h  | /bin/grep -E '(/home$|/$)')
+
+for line in ${(f)needed};do
+    free=$(awk '{ print $5 }' <<< $line)
+    if [[ ${free%\%} -gt 94 ]];then
+        echo -n -e " Alert: Disk Low"
+        break
+    fi
+done
+#echo -n -e ""
+#set +x

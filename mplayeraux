@@ -21,6 +21,7 @@ active(){
     done
 }
 
+export yprofile="mplayeraux"
 
 border(){
     #return
@@ -57,9 +58,11 @@ echo_and_test(){
 echo_and_test || active 
 
 if [[ $1 == "stop" ]];then
-    echo 'get_time_pos' >$MPSOCKET
-    echo 'get_property path' > $MPSOCKET 
-    echo 'stop' >$MPSOCKET
+    #if pgrep mplayer &>/dev/null;then
+        echo 'get_time_pos' >$MPSOCKET
+        echo 'get_property path' > $MPSOCKET 
+        echo 'stop' >$MPSOCKET
+    #fi
     sleep 3
     LOG="tail -5 /tmp/mplayer.log"
     position=`${=LOG} | /bin/grep ANS_TIME_POSITION | head -1 |  cut -d "=" -f 2`
@@ -86,17 +89,18 @@ elif [[ $1 == "bookmark" ]];then
     echo "$file:$position:${add_text// /,}" >> ~/.mplayer.bookmarks
 
 elif [[ $1 == "extract" ]];then
-    file=$(cat ~/.mplayer.bookmarks | ${=DMENU} | tr ':' '#' )
+    file=$(cat ~/.mplayer.bookmarks | ${(e)=YDMENU} | tr ':' '#' )
     while [[ ! -z $file ]];do
         echo "loadfile \"${file[(ws:#:)1]}\"" > $MPSOCKET
         echo "set_property time_pos ${file[(ws:#:)2]}" > $MPSOCKET
         sleep 3
         while ! tail -2 /tmp/mplayer.log | /bin/grep "#STOPPED ${file[(ws:#:)1]}";do sleep 3;done
-        file=$(cat ~/.mplayer.bookmarks | ${=DMENU} | tr ':' '#')
+        file=$(cat ~/.mplayer.bookmarks | ${(e)=YDMENU} | tr ':' '#')
     done
 
 elif [[ $1 == "cleanup" ]];then
-    timeout -k 10 10 ~/bin/mplayeraux stop
+    # Assumption: mplayer is already stopped
+    #timeout -k 10 4 ~/bin/mplayeraux stop
     rm /tmp/mplayer/*
     killall -9 mplayer
     rm /tmp/locks/mplayer*

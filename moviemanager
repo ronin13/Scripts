@@ -1,0 +1,70 @@
+#!/bin/zsh
+
+# Dependencies
+# 1. fetch_poster.py 
+# 2. imdbpy.py -- both from  mythtv scripts(no need to install mythtv.. just
+# search for those files on intertubes)
+# 3. imdb package from  http://imdbpy.sourceforge.net/
+
+# To add 
+# 1. My votes and other votes
+# 2. Symlink to download dir
+# 3. Symlink to torrent file (legal of course)
+# 4. Search and retrieval
+# 5. Linking between movies
+# 6. Handling parallel connections -- without getting banned :)
+# 7. Watched or not
+# 8. Better genre sorting/searching
+
+#set -x
+if [[ -z $2 ]];then echo "Not enough arguments"; exit 1;fi
+
+
+action=${1:-view}
+
+
+dir="$HOME/.imdatabase"
+ids="$dir/.movieids"
+rm $dir/.done &>/dev/null
+
+
+if [[ $action == add ]];then
+    url="$2"
+    stage=$3
+    temp=$RANDOM
+    movie_id="${${url:t}#[a-zA-Z][a-zA-Z]}"
+
+    if ps auxww | grep -q $movie_id | grep -v grep;then
+        exit
+    fi
+    
+    if grep -q $movie_id $ids;then
+        exit
+    else
+        echo $movie_id >> "$dir/.movieids"
+    fi
+
+    title="$(get_movie.py $movie_id 2>/dev/null | tee /tmp/$temp  | grep Title | cut -d : -f 2 | sed -e 's/^\s*//g')"
+    [[ -d "$dir/$title" || -d "$dir/$title-stage" ]] && exit
+
+
+    if [[ -n $stage ]];then
+        title="$title-stage"
+    fi
+    mkdir -p "$dir/$title"
+    mv /tmp/$temp "$dir/$title/desc"
+
+    poster=$(~/bin/fetch_poster.py -P $movie_id -a 2>/dev/null | tail -1)
+    mv $poster "$dir/$title/poster.jpg"
+    notify-send "IMDB:" "^i(/home/raghavendra/.notify-icons/movies.xpm)$title added"
+elif [[ $action == view ]];then
+    notify-send "IMDB:" "^i(/home/raghavendra/.notify-icons/movies.xpm)Nothing for now"
+fi
+
+# Completion token
+touch $dir/.done &>/dev/null
+#set +x
+
+#for x in *;do  x="$(echo $x | tr -dc '[0-9A-Za-z ]')"; echo -n "$x::"; locate "$x[(w)1]"  | /bin/grep -i -E '*.(avi|mkv|mp4)$' | grep "$x[(w)2]" | grep "$x[(w)3]" | head -1 ; echo "===================="; done | tee /tmp/llog
+#for line in $(cat /tmp/llog2);do first="$(echo $line | cut -d ':' -f 1)"; second="$(echo $line | cut -d : -f 3)"; pushd "*$first*" 2>/dev/null; echo "ln -s $second:h ." ;popd;done |& less
+

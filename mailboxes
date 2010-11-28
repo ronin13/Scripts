@@ -1,0 +1,31 @@
+#!/bin/zsh
+#set -x
+which pushd &>/dev/null || exit 1
+
+pushd -q ~/Mail/Kronos/
+[[ $PWD == */Mail/Kronos ]] && find . -type d -mtime +30 -exec rm -rf {} \;
+popd -q
+
+today=$(date +%d-%m-%Y)
+yesterday=$(date --date='1 day ago' +%d-%m-%Y)
+
+if [[ ! ${$(readlink ~/Mail/Kronos/Today):t} == $today \
+    || ! ${$(readlink ~/Mail/Kronos/Yesterday/):t} == $yesterday  ]];then 
+    rm ~/Mail/Kronos/Yesterday
+    ln -sf ~/Mail/Kronos/$yesterday ~/Mail/Kronos/Yesterday
+    rm ~/Mail/Kronos/Today
+    ln -sf ~/Mail/Kronos/$today ~/Mail/Kronos/Today
+fi
+
+
+echo "~/Mail/Kronos/Today \
+    ~/Mail/Kronos/Yesterday \
+    $(find ~/Mail/ -type d -name new -printf '%d:%C@:%h \n'  \
+    | sort -t : -k 1,2 -r  \
+    | cut -d : -f 3 \
+    |  grep -v -E '(Chro|Old|Junk|Kro)' \
+    | tr '\n' ' ' \
+    |  tr -s ' ')"
+
+
+#set +x 

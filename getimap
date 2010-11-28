@@ -5,6 +5,10 @@ if ! mount | grep -q wormole;then
     exit 
 fi
 
+if ps auxww | grep -q getmail | grep -v grep;then
+    exit
+fi
+
 
 echo "#########################`date`####################" >> ~/logs/getmail.log
 
@@ -15,4 +19,9 @@ if [[ $left > 90 ]];then
     echo "Low on space -- quitting" >> ~/logs/getmail.log
     exit 1 
 fi
-setlock -X -n /tmp/locks/getmail getmail -n -q
+
+notify-send "Mailman" "....Fetching mails."
+
+setlock -X -n /tmp/locks/getmail getmail -n -q --rcfile=getmailrc.gmail --rcfile=getmailrc.yahoo
+
+[[ $? == 0 ]] && notify-send "Mailman" ".. Done "

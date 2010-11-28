@@ -3,7 +3,13 @@
 #set -x
 URL="$1"
 if [[ $URL == (#i)(*.jpg|*.png|*.jpeg) ]];then 
-    feh -j ~/.local/share/feh/ -k "$URL"
+    file=$URL:t
+    file="~/.local/share/feh/$file"
+    if [[ ! -f "$file" ]];then
+        feh -j ~/.local/share/feh/ -k "$URL"
+    else
+        feh $file
+    fi
     exit
 fi
 
@@ -40,7 +46,7 @@ if [[ $0 == *ubrowser ]];then
 fi
 #echo $isrxvt, $URL,$0,$OB,$TBROWSER,$BROWSER >| /tmp/testb
 
-isrxvt=0
+#isrxvt=0
 if [[ $URL == http://tinyurl* || $num1 == $num2 || ((! -t 1) && $isrxvt == 0) ]];then
     OB="$BROWSER"
     $OB -remote "openurl($URL)"
