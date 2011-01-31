@@ -1,0 +1,17 @@
+#!/bin/zsh
+setopt shwordsplit
+isurl () {
+         url="$@"
+         curl -I -s "$url" &>/dev/null || return 1
+         return 0
+ }
+export yprofile="current"
+
+while :;do
+    object=$(tac ~/.current | ${DMENU} )
+    [[ -z $object ]] && break
+    object=${(Q)object}
+    if isurl $object;then firefox -new-tab $object; continue ;fi
+    xclip -i <<< "$object"
+    if =$object;then  $object;fi
+done 

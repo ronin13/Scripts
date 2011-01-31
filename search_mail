@@ -1,0 +1,4 @@
+#!/bin/bash
+query=$(zenity --entry --text "Enter search query");
+[[ -z $query ]] && zenity --error --text "Mairix:Don't waste my/your time" && exit
+mairix "$query"

@@ -1,0 +1,11 @@
+#!/bin/bash
+#set -x
+# Testing
+OLDIFS=$IFS
+IFS=":"
+for i in $PATH 
+do
+	find $i -maxdepth 1 -executable -iname "$@"
+done
+IFS=$OLDIFS
+#set +x

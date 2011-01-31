@@ -5,7 +5,7 @@ trap 'print -n;exit 1' INT
 autoload -U colors && colors
 #isgit="$(git rev-parse --is-inside-work-tree 2>/dev/null)"
 #isgit="$(git rev-parse --is-inside-work-tree 2>/dev/null)"
-if  test (../)#.git(N);then
+if  test (../)#.git(N) 2>/dev/null;then
      local gprompt="("
      gprompt+="$(git branch | grep '*'| cut -d ' ' -f 2  | tr -d '\n')"
      #timeout 3 git status -s 

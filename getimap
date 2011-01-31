@@ -22,6 +22,6 @@ fi
 
 notify-send "Mailman" "....Fetching mails."
 
-setlock -X -n /tmp/locks/getmail getmail -n -q --rcfile=getmailrc.gmail --rcfile=getmailrc.yahoo
+setlock -X -n /tmp/locks/getmail getmail -n -q --rcfile=getmailrc.gmail --rcfile=getmailrc.yahoo --rcfile=getmailrc.wnohang --rcfile=getmailrc.gmail2
 
 [[ $? == 0 ]] && notify-send "Mailman" ".. Done "

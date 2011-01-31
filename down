@@ -7,11 +7,8 @@ exit 1
 }
 
 sync
-sleep 3
+mount | grep loop | grep -v pacman && sudo umount /mnt*
 unmount-removables || failed
 sleep 2
-vimote down
-sleep 5
-killall -w mutt newsbeuter firefox 
+~/bin/tux killall force
 sleep 1
-shutdown -h now

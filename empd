@@ -1,0 +1,151 @@
+#!/usr/bin/env sh
+
+#
+# mudo (like `sudo', but working on music instead of switching users) is a 
+# small wrapper script to convert or decode certain audio file types.
+#
+# © 2006 by Jan-Benedict Glaw <jbglaw@lug-owl.de> under the terms of the
+# GNU General Public License Version 2.0.
+#
+# These programs are called internally and should be installed. There's no
+# error checking right now, so you'd better make sure to have these installed
+# or just don't work with the file types they support. Package names added
+# in braces.
+#
+#  * lame
+#  * flac and metaflac (flac)
+#  * vorbis-tools
+#  * twolame
+#  * wavpack
+#  * speex
+#  * mpg321
+#  * mp3info
+#  * sfinfo (libaudiofile-dev)
+#
+# Missing sound formats:
+# ~~~~~~~~~~~~~~~~~~~~~~
+# Musepack (*.mpc)
+# MOD (*.mod)
+#
+# Hints:
+# ~~~~~~
+#  * If you add further sound types, pay attention that you should first
+#    supply -r/-s/-w/-c to sox and after that the -t raw (for streamdecode).
+#    Otherwise it'll happily ignore those output format options...
+#
+
+export LANG=C
+export LC_ALL=C
+
+ACTION="${1}"
+case "${ACTION}" in
+        encode)
+                INPUT="${2}"
+                OUTPUT="${3}"
+                case "${OUTPUT}" in
+                        *.aac) faac "${INPUT}" -o "${OUTPUT}" ;;
+                        *.flac) flac "${INPUT}" -o "${OUTPUT}" ;;
+                        *.mp2) twolame "${INPUT}" "${OUTPUT}" ;;
+                        *.mp3) lame "${INPUT}" "${OUTPUT}" ;;
+                        *.mp4) faac "${INPUT}" -o "${OUTPUT}" ;;
+                        *.ogg) oggenc "${INPUT}" -o "${OUTPUT}" ;;
+                        *.spx) speexenc "${INPUT}" "${OUTPUT}" ;;
+                        *.wv) wavpack "${INPUT}" -o "${OUTPUT}" ;;
+                        *) echo "Unknown target file format: ${OUTPUT}" >&2
+                           exit 1 ;;
+                esac
+                ;;
+
+        decode)
+                INPUT="${2}"
+                OUTPUT="${3}"
+                case "${INPUT}" in
+                        *.aac) faad "${INPUT}" -o "${OUTPUT}" ;;
+                        *.flac) flac -d "${INPUT}" -o "${OUTPUT}" ;;
+                        *.mp2) mpg321 "${INPUT}" -w "${OUTPUT}" ;;
+                        *.mp3) mpg321 "${INPUT}" -w "${OUTPUT}" ;;
+                        *.mp4) flac -d "${INPUT}" -o "${OUTPUT}" ;;
+                        *.ogg) oggdec "${INPUT}" -o "${OUTPUT}" ;;
+                        *.spx) speexdec "${INPUT}" "${OUTPUT}" ;;
+                        *.wv) wvunpack "${INPUT}" -o "${OUTPUT}" ;;
+                        *) echo "Unknown source file format: ${INPUT}" >&2
+                           exit 1 ;;
+                esac
+                ;;
+
+        rawdecode | filerawdecode)
+                TYPE="${2}"
+                INPUT="${3}"
+                case "${TYPE}" in
+                        aac) faad -f 2 -b 1 -s 44100 "${INPUT}" -o - 2> /dev/null ;;
+                        flac) flac -d "${INPUT}" --endian=little --sign=signed --force-raw-format -o - 2>/dev/null ;;
+                        mp2) mpg321 "${INPUT}" -w - 2>/dev/null | sox -t wav - -r 44100 -s -w -c 2 -t raw - ;;
+                        mp3) mpg321 "${INPUT}" -w - 2>/dev/null | sox -t wav - -r 44100 -s -w -c 2 -t raw - ;;
+                        mp4) flac -d "${INPUT}" --endian=little --sign=signed --force-raw-format -o - 2>/dev/null ;;
+                        ogg) oggdec "${INPUT}" -R -s 1 -e 0 -b 16 -o - 2>/dev/null ;;
+                        spx) speexdec "${INPUT}" --rate 44100 --stereo - 2>/dev/null ;;
+                        wv) wvunpack "${INPUT}" -r -o - 2>/dev/null ;;
+                        *) echo "Unknown source file format: ${TYPE}" >&2
+                           exit 1 ;;
+                esac
+                ;;
+
+        streamrawdecode)
+                TYPE="${2}"
+                case "${TYPE}" in
+                        #audio/mpeg | mp3) mpg321 -w - - 2>/dev/null | sox -t wav - -r 44100 -s -w -c 2 -t raw - ;;
+                        audio/mpeg | mp3) mplayer -vo null -msglevel all=-1 -quiet -srate 44100 -channels 2 -ao pcm:nowaveheader:fast:file=/dev/stdout - 2>/dev/null ;;
+                        audio/wav | wav) sox -t wav - -r 44100 -s -w -c 2 -t raw - ;;
+                        flac) flac -d - --endian=little --sign=signed --force-raw-format -o - 2>/dev/null ;;
+                        ogg) oggdec - -R -s 1 -e 0 -b 16 -o - 2>/dev/null ;;
+                        *) echo "Unknown MIME type ${2}" >&2
+                           exit 1 ;;
+                esac ;;
+
+        gettag)
+                TAGNAME="${2}"
+                TYPE="${3}"
+                INPUT="${4}"
+                case "${TYPE}" in
+                        aac) :;;
+                        flac) case "${TAGNAME}" in
+                                time) SAMPLES="`metaflac --show-total-samples "${INPUT}" 2>/dev/null`"
+                                      RATE="`metaflac --show-sample-rate "${INPUT}" 2>/dev/null`"
+                                      echo $(( ${SAMPLES} / ${RATE} )) 2>/dev/null;;
+                                album | artist | title | track | name)
+                                        metaflac --show-tag="${TAGNAME}" "${INPUT}" ;;
+                                *) exit 1 ;;
+                                esac ;;
+                        mp2) :;;
+                        mp3) case "${TAGNAME}" in
+                                album) mp3info -p '%l' "${INPUT}" ;;
+                                artist) mp3info -p '%a' "${INPUT}" ;;
+                                title) mp3info -p '%t' "${INPUT}" ;;
+                                track) mp3info -p '%n' "${INPUT}" ;;
+                                name) :;;
+                                time) mp3info -p '%S' "${INPUT}" ;;
+                                *) exit 1 ;;
+                             esac ;;
+                        ogg) :;;
+                        mp4) :;;
+                        spx) :;;
+                        wav) case "${TAGNAME}" in
+                                time) sfinfo "${4}" | awk '/^Duration / {print $2}' ;;
+                                *) exit 1 ;;
+                             esac ;;
+                        wv) :;;
+                        *) echo "Unknown source file format: ${TYPE}" >&2
+                           exit 1;;
+                esac ;;
+
+        play)
+                :;;
+
+        *)
+                echo "$0 encode <inputfile.wav> <outputfile>" >&2
+                echo "$0 decode <inputfile> <outputfile.wav>" >&2
+                echo "$0 filerawdecode <filetype> <inputfile>" >&2
+                echo "$0 streamrawdecode <file_or_mime_type>" >&2
+                echo "$0 gettag <tagname> <filetype> <inputfile>" >&2
+                exit 1 ;;
+esac

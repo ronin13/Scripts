@@ -6,7 +6,8 @@ type=${1:="sess"}
 if [[ $type == sess ]];then
     export yprofile="dactyl-sess"
     pushd ~/.dactyls/sessions
-    file=$(print -l *(om[1,-1]) | ${DMENU})
+    file=$(print -l *(om[1,-1]) | ${=DMENU})
+    [[ -z $file ]] && exit
         if [[ -n $file && $file == *: ]];then
             while :;do
                 url=$($=DMENU < $file)
@@ -14,7 +15,7 @@ if [[ $type == sess ]];then
                 firefox -new-tab $url[(w)1]
             done
         else
-            for line in $(cat $file);do
+            for line in "${(f)$(<$file)}";do
                 firefox -new-tab $line[(w)1]
             done
         fi

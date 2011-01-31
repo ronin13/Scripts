@@ -1,0 +1,69 @@
+#!/bin/zsh
+
+[[ ! $(whoami) == 'root' ]] && exit 1
+
+debug=0
+nographic=1
+huge=0
+runas="raghavendra"
+DIR="/home/raghavendra/logs/qemu"
+bzImage="$DIR/kvmImage"
+
+
+typeset -A args
+args=(d debug n nographic g huge I bzImage)
+
+while getopts ':gn:dI:h' opt;do
+    case $opt in
+        g|d)
+            eval $args[$opt]=1
+            ;;
+        n)
+            nographic=$OPTARG
+            ;;
+        I)
+          bzImage=$OPTARG
+          ;;
+        h)
+            print "$0 [-d] [-g] [-n=0|1] [-I=<image>] [-h]
+            d: debug
+            g: huge
+            n: nographic (default=1)
+            I: Image (default=$DIR/kvmImage)"
+            exit 1
+            ;;
+    esac
+done
+
+shift $(( OPTIND-1 ))
+EARGS="$@"
+
+[[ ! -d /mnt-qemu ]] && mkdir -p /mnt-qemu
+
+if [[ -f $bzImage && $debug == 1 ]];then
+    external=" -kernel /boot/vmlinuz26 "
+fi
+
+if [[ $huge == 1 ]];then
+    echo 296 >|   /proc/sys/vm/nr_hugepages
+    hugearg=" -mem-path /media/hugepages -mem-prealloc "
+fi
+
+if [[ $nographic == 1 ]];then
+    graph=" -daemonize -nographic -serial file:$DIR/console.log"
+else
+    graph=" -vga std -sdl -no-frame"
+fi
+
+qemu-kvm -name Archie -enable-kvm -s  -qmp unix:$DIR/archie.sock,server,nowait -boot order=dc \
+    -m 512 $hugearg -drive file=/media/Inkq/Archie.img,if=virtio,cache=writeback,boot=on \
+    -net nic,model=virtio,vlan=1 -net user,vlan=1,hostfwd=tcp:127.0.0.1:2222-:22 $=graph \
+    -virtfs local,path=$DIR/share,security_model=passthrough,mount_tag=share -balloon virtio \
+    $external -runas $runas   $=EARGS \
+    || exit 1
+
+
+echo 1 >| /sys/kernel/mm/ksm/run
+sudo -u $runas $=LOCK/sshfs sshfs -p 2222 raghu@localhost:/ /mnt-qemu
+rlwrap  -p green -C qmp socat - $DIR/archie.sock
+

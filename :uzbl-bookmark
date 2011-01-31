@@ -1,0 +1,8 @@
+#!/bin/bash
+
+file=${XDG_DATA_HOME:-$HOME/.local/share}/uzbl/bookmarks
+[ -r "$file" ] || exit
+#DMENU="$HOME/bin/dmenu/dmenu  -i -l 3 -nb #303030 -nf black -sb #303030 -p :" 
+goto=`$DMENU  < $file | awk '{print $1}'`
+
+[ -n "$goto" ] && uzbl-browser $goto

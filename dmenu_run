@@ -1,0 +1,4 @@
+#!/bin/zsh
+PATH="/home/raghavendra/bin:/opt/wine/bin:/bin:/usr/bin:/sbin:/usr/sbin"
+#exe=`dmenu_path_c | dmenu -i -fa 'xft:Bitstream:pixelsize=14' -nb black -nf white -p : ${1+"$@"}`  && exec ${=exe}
+exe=`dmenu_path | yeganesh -f -- -i -fn 'xft:Bitstream:pixelsize=19' -m 1 -sb aquamarine4 -nb grey2 -nf grey50 -p : `  && exec ${=exe}

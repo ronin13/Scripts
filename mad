@@ -1,0 +1,54 @@
+#!/bin/zsh
+CMD="$1"
+ARG="$2"
+typeset -A displacement dispatcher
+displacement=(prev '-10' next '+10')
+
+dispatcher=(
+    slide_mplayer  ' mplayeraux s${cmd}                          '
+    slide_mpd      ' mpc seek ${displacement[$cmd]}              '
+    toggle_mplayer ' mplayeraux pause                            '
+    toggle_mpd     ' mpc toggle                                  '
+    toggle_none    ' none                                        '
+    next_mplayer   ' mplayeraux p$cmd                            '
+    next_mpd       ' mpc $cmd                                    '
+)
+
+
+function running(){
+    ecode=0
+    if   mpc status | /bin/grep -q "\[playing\]";then
+            retval="mpd"
+            return
+    fi
+    mplayeraux status
+    ecode=$?
+    if  [[ $ecode == 0 ]];then
+            retval="mplayer"
+    else
+            latest mpd mplayer
+            fret=$retval
+            [[ $ecode == 1 ]] && fret=mpd
+            retval="$fret"
+    fi
+}
+
+function latest(){
+    arg1=$1
+    arg2=$2
+    x1=$(stat --printf=%Y /proc/$(pidof -s $arg1)/statm)
+    x2=$(stat --printf=%Y /proc/$(pidof -s $arg2)/statm)
+    [[ $x1 > $x2 ]] && retval=$1 || retval=$2
+}
+
+
+function {toggle,slide,next} {
+    which="$0"
+    cmd=${1:-next}
+    running 
+    function="${which}_${retval}"
+    ${(e)=dispatcher[$function]}
+}
+
+
+$CMD $ARG

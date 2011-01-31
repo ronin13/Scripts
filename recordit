@@ -1,0 +1,3 @@
+#!/bin/bash
+ossmix record.rec1 ON
+ossmix record.rec1 +25

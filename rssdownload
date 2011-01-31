@@ -1,0 +1,45 @@
+#!/bin/zsh
+setopt multios
+limit=${1:-10}
+DB="$HOME/.local/share/newsbeuter/cache.db"
+
+filters="megaupload"
+
+results="$HOME/Downloads/list"
+typeset -A patterns
+#patterns=(stonerobi releaselog megarelease)
+patterns=(stonerobi 1  megarelease 0 releaselog 0)
+#patterns=(megarelease)
+
+
+file1=/tmp/rss1
+file2=/tmp/rss2
+ids=/tmp/tmprss
+
+
+for pat in ${(k)patterns}
+do
+        sqlite3 -list $DB    \
+            "select id,url from rss_item where feedurl like '%$pat%' ORDER BY pubDate DESC LIMIT $limit;" >| $ids
+
+        for line in "${(f)$(< $ids)}"
+        do
+            id=$line[(ws:|:)1]
+            sqlite3  $DB "select title from rss_item where id == $id" >|$file1
+
+            if [[ $patterns[$pat] == 1 ]];then
+                  sqlite3  $DB "select content from rss_item where id == $id" | urifind | /bin/grep -E $filters | perl -pe 'if (!eof()) { s/\n/ | /g }' >|$file2
+             else
+                  url=$line[(ws:|:)2]
+                  filters=(/usr/share/plowshare/modules/*)
+                  filters=($filters:t:r)
+                  /usr/bin/w3m -no-cookie -dump $url | urifind | /bin/grep -E $filters | perl -pe 'if (!eof()) { s/\n/ | /g }' >|$file2
+             fi
+        paste -d '|' $file1 $file2  >>| /tmp/result
+
+        done
+done
+
+rm $file1 $file2 $ids
+
+# vim:set ft=sh:

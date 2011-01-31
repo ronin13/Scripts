@@ -1,0 +1,11 @@
+#!/bin/zsh
+idle=$(mpstat | tail -1 | awk '{ print $12 }')
+print $idle
+util=${$((100.00-$idle))%.*}
+
+if [[ $util -ge 50 ]];then
+    echo -n "CPU: <fc=#f0c040>$util</fc>%"
+else
+    echo -n "CPU: $util%"
+fi
+

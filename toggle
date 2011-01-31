@@ -1,0 +1,4 @@
+#!/bin/bash
+MPSOCKET=/tmp/mplayer.fif
+[[ -e $LOCKDIR/mplayer ]] && pidof mplayer &>/dev/null  && echo "pausing get_file_name" > $MPSOCKET 
+mpc toggle

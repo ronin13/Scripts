@@ -1,6 +1,28 @@
 #!/bin/zsh
+tmux capture-pane -t uake
+tmux save-buffer  /tmp/mux-buffer
+#LAST_URL=$(/bin/grep  -i -P '(https?://|www.)[0-9A-Z\.\/\-\_~\?=]*' 2>/dev/null /tmp/mux-buffer | tac | $=DMENU)
 
-tmux capture-pane
-tmux save-buffer /tmp/mux-buffer
-LAST_URL=$(/bin/grep  -i -o -P '(https?://|www.)[0-9A-Z\.\/\-\_~\?=]*' 2>/dev/null /tmp/mux-buffer | tac | $=DMENU)
-[ -n "$LAST_URL" ] && browser "$=LAST_URL"
+
+typeset -A dispatcher
+dispatcher=(
+';' '/bin/true'
+':'   'ubrowser'
+)
+
+while :;do
+    LAST_URL=${$(/bin/grep -i -E 'http[s]?:.*' /tmp/mux-buffer | tac | $=DMENU ):?Empty input}
+    echo "$LAST_URL" >>| ~/.current
+    method=$dispatcher[$LAST_URL[-1]]
+
+    if [[ -n $method ]];then 
+        LAST_URL=$(perl -MRegexp::Common=URI -lne 'm{$RE{URI}{HTTP}{-scheme => qr/https?/}{-keep}}  && print $1' <<< ${LAST_URL[1,-2]})
+        $method $LAST_URL
+        break
+    else
+        LAST_URL=$(perl -MRegexp::Common=URI -lne  'm{$RE{URI}{HTTP}{-scheme => qr/https?/}{-keep}}  && print $1' <<< ${LAST_URL})
+        browser $LAST_URL
+    fi
+done
+xclip -i <<< $LAST_URL
+notify-send "Turl" "$LAST_URL handled"

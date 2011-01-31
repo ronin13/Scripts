@@ -1,0 +1,13 @@
+#!/bin/zsh
+
+vfile="$HOME/.cache/vindex"
+if [[ $1 == "gen" ]];then
+    /usr/bin/locate '*.avi' '*.mkv' '*.mov' '*.mpeg' '*.mp4' '*.mp4' >| $vfile
+else
+    while :
+    do
+        file=$($=DMENU <  $vfile)
+        [[ -z $file ]] && exit
+        ~/bin/mplayer $file &
+   done
+fi

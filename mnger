@@ -1,24 +1,40 @@
 #!/bin/zsh
-daemons=($@)
-#print -l $daemons
+#set -x
+USER="raghavendra"
+duration=120
+export DISPLAY=:0
+state_file="/home/$USER/.dpms/.state"
+previous=$(< $state_file)
 
 while :
 do
-    for d in $daemons
-    do
-            if [[ -f /var/run/daemons/$d ]] && ! ps auxww | /bin/grep -i $d | grep -v mnger |  grep -v grep &>/dev/null
-            then
-                    echo "Restarting service $d..."
-                    sudo /etc/rc.d/$d stop
-                    sleep 5
-                    sudo /etc/rc.d/$d start
-            fi
-    done
-    sleep 60
     # Heartbeat for flash
-    cpu=$(top -b -n 1 | grep plugin-cont | head -1 | awk '{ print $9 }')
-    if [[ -n $cpu && $cpu -gt 2 ]];then
-         xdotool key ctrl
+    #state=$(top -b -n 1 | grep plugin-cont | head -1 | awk '{ print $8 }')
+    if xdotool search --name '.*flash.*';then
+    #if [[ -n $state && $state == 'R' ]];then
+         sudo -u $USER xdotool key ctrl
+         sleep 10
+         continue
     fi
-    sleep 60
+    mplayeraux status
+    if [[ $? == 1 ]];then 
+        sleep 60
+    else
+        inotifywait -t $duration /dev/input/event*
+    fi
+    if [[ $? == 2 && $previous == up ]];then
+        for file in /home/$USER/.dpms/*;do 
+            $file down
+        done
+        echo -n "down" >| $state_file
+    elif [[ $previous == down ]];then
+        for file in /home/$USER/.dpms/*;do 
+            $file up
+        done
+        echo -n "up" >| $state_file
+    else
+        sleep 60
+        #Something else or nothing
+    fi
 done
+#set +x

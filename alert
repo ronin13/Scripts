@@ -1,5 +1,5 @@
 #!/bin/zsh
-#set -x
+set -x
 needed=$(/bin/df -h  | /bin/grep -E '(/home$|/$)')
 
 for line in ${(f)needed};do
@@ -10,4 +10,4 @@ for line in ${(f)needed};do
     fi
 done
 #echo -n -e ""
-#set +x
+set +x

@@ -1,6 +1,12 @@
 #!/bin/zsh
 #set -x
 
+isurl () {
+        url="$@" 
+        curl -I -s "$url" &> /dev/null || return 1
+        return 0
+}
+
 session="uake"
 own=$$
 
@@ -10,7 +16,7 @@ if [[ -z $TMUX || $1 == -f ]];then
 fi
 
 if ! ps auxww | =grep -i w3m | =grep -v $own |  =grep -vq grep;then 
-    lastone=$(( $(tmux list-windows -t $session | wc -l)/2 + 3 )) 
+    lastone=$(( $(tmux list-windows -t $session | wc -l) + 2 )) 
     tmux new-window -d -t $session:$lastone "/usr/bin/w3m lwn.net"
     tmux join-pane -s $session:$lastone -p 80
     exit
@@ -29,12 +35,26 @@ fi
 keys=""
 
 for f in $@;do
-    tmux send-keys -t uake:$winum 'C-c' 'T' "$f" 'Enter'
+    if isurl $f;then 
+        :
+    else
+         if [[ $f == /* ]];then
+             prefix=
+         else
+             prefix="$PWD/"
+         fi
+         f="${prefix}$f"
+         if [[ ! -f $f ]];then
+            echo "Failed"
+            exit 1
+         fi
+    fi
+    tmux send-keys -t $session:$winum 'C-c' 'T' "$f" 'Enter'
 done
 
-if [[ -t 0 ]];then
-    tmux join-pane -s uake:$winum -p 75 
+if [[ -t 1 ]];then
+    tmux join-pane -s $session:$winum -p 75 
 else
-    tmux select-window -t uake:$winum  
+    tmux select-window -t $session:$winum  
 fi
 #set +x

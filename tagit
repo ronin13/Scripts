@@ -1,0 +1,12 @@
+#!/bin/zsh
+
+pushd $HOME/Arch/vim/tags
+typeset -A paths
+
+paths=(python /usr/lib/python2.7/ perl /usr/share/perl5 c /usr/include vim /usr/share/vim latex /usr/share/texmf/ latex /usr/share/texmf-dist/ ) 
+
+for lang in ${(k)paths}
+do
+ ctags -f $lang.ctags -R $paths[$lang]
+done
+popd

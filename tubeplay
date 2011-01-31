@@ -1,0 +1,8 @@
+#!/bin/zsh
+URL="$@"
+pushd ~/media/youtube/
+get_flash_videos  -y --subtitles "$URL" &
+sleep 8
+print  *(Om[-1]) | xclip -i
+mplayer *(Om[-1])
+popd

@@ -1,0 +1,5 @@
+#!/bin/zsh
+
+ssh-add -L | =grep -iq id_rsa || ssh-add
+mount | =grep -iq sate || sshfs -p 8193 sate@wnohang.net:/ /media/sate -o  uid=1000,gid=101,intr,allow_root &
+ 

@@ -5,7 +5,7 @@ session="uake"
 session_file="$HOME/.vim-tmp/vimote-session"
 
 if ! pgrep -x vim &>/dev/null;then 
-    lastone=$(( $(tmux list-windows -t $session | wc -l)/2 + 3 )) 
+    lastone=$(( $(tmux list-windows -t $session | tail -1 | awk -F: '{ print $1 }') + 1 ))
     tmux new-window -d -t $session:$lastone "/usr/bin/vim -S $session_file"
     tmux join-pane -s $session:$lastone -p 80
     exit
@@ -23,8 +23,10 @@ command=${1:-tabnew}
 
 
 if [[ $command == down ]];then
-    keys=":mksession! ~/.vim-tmp/vimote-session" 
-    tmux send-keys -t uake:$winum 'Escape' $keys 'Enter' 'Escape' ':wqa' 'Enter'
+    if pidof vim;then
+        keys=":mksession! ~/.vim-tmp/vimote-session" 
+        tmux send-keys -t $session:$winum 'Escape' $keys 'Enter' 'Escape' ':wqa' 'Enter'
+    fi
     exit
 fi
 
@@ -35,7 +37,8 @@ shift
 # Non join commands here
 if ! (( $# ));then
     keys="$command"
-    tmux send-keys -t uake:$winum 'Escape' $keys 'Enter'
+    tmux send-keys -t $session:$winum 'Escape' $keys 'Enter' 
+    #tmux send-keys -t $session:$winum 'Escape' 'Enter'
     exit
 fi
 
@@ -55,10 +58,10 @@ for f in $@;do
             keys=":edit $f"
         fi
     fi
-    tmux send-keys -t uake:$winum 'Escape' $keys 'Enter'
+    tmux send-keys -t $session:$winum 'Escape' $keys 'Enter'
 done
 
 # Wrong -- dont do it here
-tmux join-pane -s uake:$winum -p 75 
+tmux join-pane -s $session:$winum -p 75 
 
 #set +x

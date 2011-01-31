@@ -1,0 +1,8 @@
+#!/bin/sh
+history_file=${XDG_DATA_HOME:-$HOME/.local/share}/uzbl/history
+[ -r "$history_file" ] || exit 1
+
+#DMENU="$HOME/bin/dmenu/dmenu  -i -l 3 -nb #303030 -nf black -sb #303030 -p :" # vertical patch
+goto=`tac $history_file | $DMENU $COLORS | cut -d ' ' -f -3  | awk '{print $NF}'`
+
+[ -n "$goto" ] && uzbl-browser $goto

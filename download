@@ -1,0 +1,27 @@
+#!/bin/zsh
+histfile="$HOME/.download_history"
+URL="$@"
+if [[ $URL == *.torrent ]]
+then
+       # if [[ $1 =~ ^http.* ]];then# {{{
+       #     /usr/bin/wget --content-disposition -q $1 >  $HOME/.torrents/stage/current.torrent 
+       # else
+       #     mv "$@" $HOME/.torrents/stage/current.torrent 
+       # fi# }}}
+        
+    pidof -s rtorrent  &>/dev/null || ~/bin/tux tnum rtorrent
+
+    [[ $1 =~ ^http.* ]] && /usr/bin/wget --content-disposition -q $1 > ~/.rtorrent/watch/${1##*/} && echo "$URL ============ $(/usr/bin/aria2c --no-conf  -S ~/.rtorrent/watch/${1##*/})===========$(date)" >> $histfile && exit
+
+    cp $URL ~/.rtorrent/watch/
+    notify-send "Torrent" "Download started for $(/usr/bin/aria2c --no-conf -S $URL | grep Name) "
+    # Triggers download complete
+    echo "$URL ============ $(/usr/bin/aria2c --no-conf -S $URL | grep Name) ====================$(date)" >> $histfile
+    mv "$URL" ~/.torrents/
+
+else
+        gid=$(aria2rpc addUri "$URL") 
+        notify-send "Aria" "Download started for $gid"
+        echo "$gid:$URL >===============< $(date)" >>| $histfile
+fi
+#vim set ts=4 sw=4 foldmethod=marker tw=80 noet: 

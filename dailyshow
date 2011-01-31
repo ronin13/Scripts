@@ -1,0 +1,74 @@
+#!/bin/bash
+#
+# This script depends on curl and rtmpdump.
+# For playback I recommend mplayer.
+# Suggestions are welcome.
+# Daily show rocks
+
+RTMPDUMP="rtmpdump" # the name of the binary
+
+set -eu
+
+if [ $# = 1 ] && [ ${#1} = 6 ] ; then
+  ID="$1"
+elif [ $# = 1 ] && echo "$1" | grep -E -q "http://media.mtvnservices.com/mgid:cms:[^:]+:comedycentral.com:[0-9]+" ; then
+  ID=`echo "$1" | cut -d : -f 6`
+elif [ $# = 1 ] && echo "$1" | grep -E -q "http://.+" ; then
+  if ! ID=`curl -s "$1" | grep -E -m 1 -o "http://media.mtvnservices.com/mgid:cms:[^:]+:comedycentral.com:[0-9]+" | cut -d : -f 6` ; then
+    echo "error: could not extract video id"
+    exit 1
+  fi
+else
+  BA=`basename "$0"`
+  echo "usage:"
+  echo "  $BA \${ID}"
+  echo "  $BA http://www.thedailyshow.com/full-episodes/\${ID}/title-of-the-episode"
+  echo "  $BA http://www.thedailyshow.com/watch/some-kind-of-date/title-of-video"
+# echo "  $BA http://www.comedycentral.com/colbertreport/full-episodes/index.jhtml?episodeId=\${ID}"
+  echo "  $BA http://www.colbertnation.com/full-episodes/date-and-title-of-the-episode"
+  echo "  $BA http://media.mtvnservices.com/mgid:cms:item:comedycentral.com:\${ID}"
+  echo "  $BA http://media.mtvnservices.com/mgid:cms:video:comedycentral.com:\${ID}"
+  echo "  $BA http://media.mtvnservices.com/mgid:cms:fullepisode:comedycentral.com:\${ID}"
+  exit 1
+fi
+
+echo "ID = $ID"
+
+RTMPDUMP_OPTS="--swfUrl "http://media.mtvnservices.com/player/release/?v=4.1.2" --swfsize 536258 --swfhash f98296daddbd723bb2f740a6c276535638038b128857c8e4e750664e9e592468 --resume"
+
+GEN_URL="http://media.mtvnservices.com/player/config.jhtml?uri=mgid:cms:item:comedycentral.com:${ID}&group=entertainment&type=error"
+PARTS=`curl -s "$GEN_URL" | grep media:content | grep -v bumper | cut -d \" -f 2`
+
+echo -n "PARTS = " ; echo $PARTS
+
+FILENAMES=""
+
+# download parts in parallel
+for X in $PARTS ; do
+  VIDEO_URL=`curl -s "$X" | grep edgefcs.net | tail -n 1 | cut -d '>' -f 2 | cut -d '<' -f 1 | sed -e s/rtmpe/rtmp/`
+  echo "VIDEO_URL = $VIDEO_URL"
+  FILENAME=`basename "$VIDEO_URL"`
+  $RTMPDUMP $RTMPDUMP_OPTS -o "$FILENAME" -r "$VIDEO_URL" &
+  FILENAMES="$FILENAMES $FILENAME"
+done
+wait
+
+# here is an example of how you can combine the parts into a proper video:
+# NOTE: downloaded files are not actually in mp4 format!
+#
+#mv ds_15001_01_640x360_1300.mp4 ds_15001_01_640x360_1300.flv
+#mv ds_15001_02_640x360_1300.mp4 ds_15001_02_640x360_1300.flv
+#mv ds_15001_03_640x360_1300.mp4 ds_15001_03_640x360_1300.flv
+#mv ds_15001_04_640x360_1300.mp4 ds_15001_04_640x360_1300.flv
+#
+#ffmpeg -acodec copy -vcodec copy -i ds_15001_01_640x360_1300.flv ds_15001_01_640x360_1300.mp4
+#ffmpeg -acodec copy -vcodec copy -i ds_15001_02_640x360_1300.flv ds_15001_02_640x360_1300.mp4
+#ffmpeg -acodec copy -vcodec copy -i ds_15001_03_640x360_1300.flv ds_15001_03_640x360_1300.mp4
+#ffmpeg -acodec copy -vcodec copy -i ds_15001_04_640x360_1300.flv ds_15001_04_640x360_1300.mp4
+#
+#MP4Box -add ds_15001_01_640x360_1300.mp4 -cat ds_15001_02_640x360_1300.mp4 -cat ds_15001_03_640x360_1300.mp4 -cat ds_15001_04_640x360_1300.mp4 -new ds_15001.mp4
+#
+
+echo
+echo "play it with:"
+echo "mplayer -fixed-vo -fs${FILENAMES}"

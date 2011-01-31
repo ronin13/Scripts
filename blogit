@@ -1,0 +1,13 @@
+#!/bin/zsh
+DIR="/media/sate/srv/http/lighty/blog/"
+pushd $HOME/.posts
+echo "Post name"
+read post
+if [[   -f $DIR/$post ]];then
+    /usr/bin/vim $DIR/$post
+else
+    /usr/bin/vim $post
+    cp $post $DIR/
+fi
+popd
+

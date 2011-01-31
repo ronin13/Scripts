@@ -1,0 +1,24 @@
+#!/bin/zsh
+#set -x
+
+# Part of pipe
+if [[ ! -t 0 ]];then
+    exit
+fi
+
+# Source of Pipe
+if [[ ! -t 1 ]];then
+   #echo "Test"
+   /bin/cat $@
+   exit
+fi
+
+columns=${$(stty size)[1]}
+lines=${$(wc -l $1)[1]}
+
+if [[ $columns -gt $lines ]];then
+    /bin/cat $@
+else
+    /bin/less $@
+fi
+#set +x

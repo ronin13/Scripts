@@ -1,0 +1,6 @@
+#!/bin/bash
+POLPID=`cat ~/logs/polipo.pid`
+kill -USR1 $POLPID 
+sleep 1 
+polipo -x -c /home/raghavendra/.poliporc
+kill -USR2 $POLPID 

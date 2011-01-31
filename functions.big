@@ -1,0 +1,764 @@
+
+
+# Testing with zsh now
+
+pronounce(){
+word="${@:-$(xclip -o)}"
+if [[ ! -f $XDG_CACHE_HOME/pronounce/$word ]];then 
+    wget -qO- $(wget -qO- "http://dictionary.reference.com/browse/$word" | grep 'soundUrl' | head -n 1 | sed 's|.*soundUrl=\([^&]*\)&.*|\1|' | sed 's/%3A/:/g;s/%2F/\//g') | tee $XDG_CACHE_HOME/pronounce/$word |  /usr/bin/mplayer -really-quiet -cache 8192 -  
+else
+    mplayer $XDG_CACHE_HOME/pronounce/$word
+fi
+}
+
+function translate(){
+wget -qO - "http://ajax.googleapis.com/ajax/services/language/translate?langpair=|en&v=1.0&q=`xsel`" |cut -d \" -f 6
+}
+
+pacfilter(){
+#set -x
+client="yaourt"
+case $1 in
+*ti*)
+$client -Ss $2 | /bin/grep -A 1 --color -E ".*/.*$2.*(\)|\])$"
+;;
+*tx*)
+$client -Ss $2 |  /bin/grep -B 1 --color -E  '.*$2.*[^0-9]+.*'
+;;
+esac
+#set +x
+}
+
+
+zsource(){
+	sleep $(( RANDOM%60 ))
+    set +x 
+    source ~/.zshrc
+}
+
+map(){
+    local command i rep
+    if [ $# -lt 2 ] || [[ ! "$@" =~ :[[:space:]] ]];then
+        echo "Invalid syntax." >&2; return 1
+    fi
+    until [[ $1 =~ : ]]; do
+        command="$command $1"; shift
+    done
+    command="$command ${1%:}"; shift
+    for i in "$@"; do
+        if [[ $command =~ \{\} ]];then
+            rep="${command//\{\}/\"$i\"}"
+            eval "${rep//\\/\\\\}"
+        else
+            eval "${command//\\/\\\\} \"${i//\\/\\\\}\""
+        fi
+    done
+}
+
+function clik(){
+    #sleep 5
+    scrot -s '%Y-%m-%d-%s_$wx$h.png' -e 'mv $f ~/.scrshots/; notify-send "Scrot" "$f done!"'
+    #ls *.png
+}
+
+function mpl() 
+{
+$HOME/bin/mplayer "$@"
+}
+
+function pkgsearch(){
+#set -x
+if [[ $#  < 1 ]];then
+    echo "pkgsearch term pkglist"
+    return 1
+fi
+term="$1"
+shift
+pkg="$@"
+for i in $pkg
+do
+ for j in `pacman -Ql $i | cut -d " " -f 2`
+ do
+	grep -l -i $term $j
+ done
+done
+#set +x
+}
+
+function getmovie (){
+
+    /usr/bin/get_movie.py `/usr/bin/search_movie.py "$@" | head -3  | tail -1 | cut -d ":" -f 2`
+
+}
+
+function cnkt(){
+TERM=xterm
+#ssh -D 1080 rprabhu@proxy.eglbp.corp.yahoo.com 
+#-L 6891:socks.yahoo.com:1080
+dtach -A $HOME/.cache/1080 -E ssh rprabhu@proxy.eglbp.corp.yahoo.com -L 1080:socks.yahoo.com:1080
+}
+
+function randbash(){
+curl -s http://bash.org/?random1|grep -oE "<p class=\"quote\">.*</p>.*</p>"|grep -oE "<p class=\"qt.*?</p>"|sed -e 's/<\/p>/\n/g' -e 's/<p class=\"qt\">//g' -e 's/<p class=\"qt\">//g'|perl -ne 'use HTML::Entities;print decode_entities($_),"\n"'| head -1  
+#awk 'length($0)>0 {printf( $0 "\n%%\n" )}' > ~/bash_quotes.txt
+}
+
+
+function ifind(){
+find . -iname "*$@*"
+}
+
+mountole(){
+
+#sudo sed -i -e '/.*ecryptfs.*/s|^#\(.*\)$|\1|g' /etc/fstab 1>/dev/null
+keyctl list @u | grep -q b8d  || ecryptfs-add-passphrase #&>/dev/null
+keyctl list @u | grep -q b8d && mount -i /home/raghavendra/wormole
+#sudo sed -i -e '/.*ecryptfs.*/s|^/\(.*\)$|#&|g' /etc/fstab 1>/dev/null  
+if [[ $? = "0" ]];then
+	echo "Done!"
+else
+	echo "Failed :( "
+fi
+ssh-expect
+}
+
+
+geoip () { curl -s "http://www.geoiptool.com/?IP=$1" | html2text | egrep --color 'City:|IP Address:|Country:'; }
+
+bbcradio() { local s;echo "Select a station:";select s in 1 1x 2 3 4 5 6 7 "Asian Network an" "Nations & Local lcl";do break;done;s=($s);/usr/bin/mplayer -playlist "http://www.bbc.co.uk/radio/listen/live/r"${s[@]: -1}".asx";}
+
+
+function pactest(){
+	sourcefile="/home/raghavendra/config/pacman.conf.testing"
+	if [[ $1 = "kmod" ]];then sourcefile=/home/raghavendra/config/pacman.conf.kdemod;elif [[ $1 = "non" ]];then sourcefile=/home/raghavendra/config/pacman.conf.nonstandard;elif [[ $1 = "rollback" ]];then sourcefile=/home/raghavendra/config/pacman.conf.rollback;fi
+	shift
+	sudo cp -v $sourcefile /etc/pacman.conf
+	sudo pacman -q -Sy
+	sudo pacman -Ss "$@"
+	read
+	sudo cp -v /home/raghavendra/config/pacman.conf.standard /etc/pacman.conf
+	sudo pacman -q -Sy 1>/dev/null
+}
+
+function flushmac(){
+rm -rf /home/raghavendra/.macromedia/Flash_Player/*;
+mkdir -p ~/.macromedia/Flash_Player/macromedia.com/support/flashplayer/sys
+cp ~/Arch/settings.sol ~/.macromedia/Flash_Player/macromedia.com/support/flashplayer/sys/
+}
+
+function def(){
+ 
+ wn $1 -over
+ if [ $? != "0" ];then echo $1 >> ~/wordlist;fi               
+}
+
+function disappear(){
+sudo /etc/rc.d/tor start
+sudo /etc/rc.d/privoxy start
+}
+
+function igrep(){
+FILENAME=$1
+PATTERN=$2
+find . -iname "$FILENAME" -exec grep -il "$PATTERN" {} \;
+}
+
+function lookup(){
+links -dump http://wordnet.princeton.edu/perl/webwn?s=$1 | grep -i --word-regexp --color=always -B 2 -A 5 $1 | sed '$d'
+}
+
+function checkup() { curl -s dict://dict.org/d:"$@" | tail +4; }
+
+function stemp() { 
+echo -n `acpi -t | awk -F ',' '{ print $2 }' | cut -d " " -f 2`
+#echo `nvidia-settings -q gpucoretemp | grep Supernova | cut -d ":" -f 3`
+#echo " `nvidia-smi -a |& grep Temp | cut -c17-19`"
+#echo `sudo hddtemp SATA:/dev/sda | cut -d ":" -f 3`;
+ }
+
+function clifu(){
+wget -O - "http://www.commandlinefu.com/commands/browse/rss" 2>/dev/null | awk '/\s*<title/ {z=match($0, /CDATA\[([^\]]*)\]/, b);print b[1]} /\s*<description/ {c=match($0, /code>(.*)<\/code>/, d);print d[1]"\n"} '
+}
+
+
+
+function rcstart(){
+for d in $@;do
+    if [[ -f /var/run/daemons/$d ]];then
+        sudo /etc/rc.d/$d stop; sleep 2; sudo /etc/rc.d/$d start
+    else
+        sudo /etc/rc.d/$d start
+    fi
+done
+}
+
+function cscore()
+{
+    curl -s -e "http://www.google.com" -A "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.1) Gecko/20061204 Firefox/2.0.0.1" "http://livechat.rediff.com:80/sports/score/score.txt"
+}
+
+function whichpack(){
+pacman -Q | grep "$@"
+}
+
+function max(){
+~/bin/mplayeraux "$@"
+}
+
+function rsize() {
+wget --spider "$@" -o /tmp/wget_tmp; grep -i Length /tmp/wget_tmp; rm /tmp/wget_tmp
+}
+
+function buildabs()
+{
+    ABDIR="/var/abs/" 
+    abpath=$(find -O3 /var/abs/ -maxdepth 2 -name "$@" -type d | head -1)
+    cp -Rv $abpath /dev/shm/
+    cd /dev/shm/$1
+    #clear
+}   
+
+function vpdf(){
+pdftohtml -q -stdout -noframes "$@" | /usr/bin/w3m -T text/html
+}
+
+function view()
+{
+if [[ -z "$@" ]];then
+    thunar ~/Documents
+elif [[ $1 =~ ^http:.* ]];then
+    url=${1#*=}   # for urls like http://docs.google.com/viewer?url=<pdfurl>
+    dest="$HOME/Documents/${1##*/}"
+    wget -O - -q $url > $dest
+    detach $VIEWER $dest
+else
+    detach $VIEWER "$@" 
+fi
+}
+
+function rcstop(){
+for d in $@;do
+    sudo /etc/rc.d/$d stop
+done
+}
+
+
+function whoru() { echo "Path:"`which $@`; which =$1 |  xargs -i pacman -Qo {} ; }
+
+function fdz() { ls -lth |  egrep "[0-9](M|G)" | sort -k 5 -n | cut -d " " -f 5,6-; }
+
+function dz() { find . -maxdepth $1 -type d -exec du {} \; | sort -n | awk '{ print $2,"\t",$1/1024,"MB" }' | uniq; }
+function psp() { ps auxww | /bin/grep -i "$@"; }
+function svim() {  sudo vim "$@";}
+function bkp() 
+{   
+    rstr=`date +%s`; dest=~/Backup/`basename "$@"`.$rstr
+    cp "$@" $dest; echo "Enter description"; read desc
+    if [ -n "${desc}" ]
+    then
+       echo "$@: "`date`    >> ~/Backup/bjournal
+       echo "----------------------------------------" >> ~/Backup/bjournal
+       echo "Backup filename: "`basename $dest` >>  ~/Backup/bjournal
+       echo "Description:" >>  ~/Backup/bjournal
+       echo $desc >> ~/Backup/bjournal
+       echo " " >> ~/Backup/bjournal
+    fi
+}
+
+
+function mpd_album(){
+	rm -f ~/Albums/*
+	avatar-factory --icon-size 60 --name 2 -g music /home/raghavendra/mpd/music ~/Albums
+}
+
+function get_rss(){
+	rsstail -u http://rss.slashdot.org/Slashdot/slashdot -u http://www.reddit.com/.rss
+}
+
+function newcnd() { echo "$@" >> ~/newcomies; }
+
+function restorrent(){ 
+screen -c /home/raghavendra/.rtorrent/.screenrc -r torrent;
+}
+
+calc() {
+  echo "scale=5; $@" | bc
+}
+
+define() {
+  local LNG=$(echo $LANG | cut -d '_' -f 1)
+  local CHARSET=$(echo $LANG | cut -d '.' -f 2)
+  lynx -accept_all_cookies -dump -hiddenlinks=ignore -nonumbers -assume_charset="$CHARSET" -display_charset="$CHARSET"  "http://www.google.com/search?hl=${LNG}&q=define%3A+${1}&btnG=Google+Search" |  grep -m 5 -C 2 -A 5 -w "*" > /tmp/define
+
+  if [ ! -s /tmp/define ]; then
+    echo "Sorry, google doesn't know this one..."
+    rm -f /tmp/define
+    return 1
+  else
+      #mecho "$(cat /tmp/define | grep -v Search )" | colorit $1
+      echo "$(cat /tmp/define | grep -v Search )" | colorit $1
+    echo ""
+  fi
+  rm -f /tmp/define
+  echo ">=========================>"
+  aiksaurus $1 
+  echo $1 >> ~/wordlist
+  return 0
+}
+
+
+function myip(){
+upnpc -s | grep External | cut -d "=" -f 2
+}
+
+
+function lowmode(){
+echo "This will kill many daemons ..... "
+read
+for daemon in `cat ~/.daemons`
+do
+    sudo /etc/rc.d/$daemon stop
+done
+
+echo "This will unmount many drives..........."
+read
+~/bin/unmount-removables
+sudo umount /media/System /media/Sentinel /media/Colossus /media/Vanguard /home/raghavendra/wormole /var/lib/pacman.db /proc/bus/usb
+
+echo "Backlight to zero"
+echo 0 > /sys/devices/virtual/backlight/acpi_video0/brightness
+echo "Remove usb cables and start atd if needed"
+}
+
+function highmode(){
+echo "This will start many daemons ..... "
+read
+for daemon in `cat .daemons`
+do
+    sudo /etc/rc.d/$daemon start
+done
+
+echo "Backlight to maximum"
+echo 10 > /sys/devices/virtual/backlight/acpi_video0/brightness
+sudo mount -a
+
+}
+man(){
+#    setopt nullglob
+#    if [[ -z $2 ]] && ! test -f $HOME/helpers/man/**/$1.* &&  /usr/bin/man -M /usr/share/man -w $1 1>/dev/null ;then
+#        location=$(/usr/bin/man -M /usr/share/man -w $1)
+#        number=${${location:t}[(ws:.:)2]}
+#        gunzip -c $location  >| $HOME/helpers/man/man${number//[a-z]/}/$1.${number}
+#    fi
+	if [[ ! -z $2 ]];then /usr/bin/man "$@"; return; fi
+	unset MANPATH 
+	if [[ -z $TMUX ]];then
+		LC_ALL=C LANG=C TERMINFO=~/.terminfo/ TERM=mostlike /usr/bin/man "$@"
+	else
+	   tmux split-window -p 83 "LC_ALL=C LANG=C TERMINFO=~/.terminfo/ TERM=mostlike exec /usr/bin/man $@"
+	fi
+}
+
+ygist(){
+    echo "sure y/N"
+    read -q && xclip -o | gist
+}
+
+sgist(){
+    echo "sure y/N"
+    read -q && xclip -o | curl -s -F 'sprunge=<-' http://sprunge.us | tee /dev/stderr | xclip -i
+}
+
+whichpkg(){
+    file="$@"
+    /usr/bin/w3m "http://testnet.har-ikkje.net/kittyfile/get_result?query=$file"
+}
+
+append(){
+    echo "Enter stuff"
+    cat >>$1
+}
+
+
+sendmail() {
+    #"msmtp -C $HOME/.msmtprc"
+    subject="$1"
+    mailto=$2
+    # It will ask for body -- much better
+    /usr/bin/mutt -s "$subject" $mailto  # < "$@"
+}
+
+
+#cd () {
+
+    ##emulate -LR zsh
+    ##setopt autopushd
+
+    #if [[ $# -ge 3 ]]; then
+        #echo cd: too many arguments >&2
+        #return 1
+    #elif [[ $# -eq 2 ]]; then
+         #builtin cd "$1" $2
+        ##local newdir=${(S)PWD//$1/$2}
+        ##echo $newdir
+        ##builtin cd $newdir
+    #elif [[ $# -eq 1 ]]; then
+        #if [[ ! -d "$1" && -d "$1:h" ]]; then
+            #echo "$1:h"
+            #builtin cd "$1:h"
+        #else
+            #builtin cd "$1"
+        #fi
+    #else
+        #builtin cd
+        #fi
+#}
+
+tmpwrite(){
+  $file = mktemp
+  /usr/bin/vim $file
+  mv $file $file.d
+}
+
+apod(){
+    #set -x
+    DATE=`date +%s`
+    FILE="$HOME/.cache/apod/apod:$DATE.jpg"
+    apodTemp=$(mktemp)
+    curl -s http://apod.nasa.gov/apod/ >| $apodTemp
+    apodDesc=$(perl -lne 'print $_ if /Explanation:/../Tomorrow/' $apodTemp | /usr/binw3m -dump -T text/html | head -n -1)
+    url="$(grep IMG $apodTemp | cut -d "\"" -f 2)"
+    wget -q -O "$FILE" -c http://apod.nasa.gov/apod/${=url}
+    /usr/bin/perlbin/vendor/exiftool -overwrite_original -UserComment="$apodDesc" $FILE
+    feh $FILE &
+    echo $apodDesc | par f | xmessage -file - #-timeout 30
+    echo "Set as wallpaper: y/n"
+    read -q  && set_wall $FILE
+    #set +x
+}
+
+server(){
+if [[ $1 == start ]];then
+    python -m SimpleHTTPServer 9914 &>~/logs/server.log &
+else
+    $TBROWSER http://localhost:9914/
+fi
+}
+
+
+isurl(){
+    url="$@"
+    # Using a much simpler version -- skt
+    curl -I -s "$url" &>/dev/null || return 1
+    return 0
+    #zmodload zsh/regex
+    #[[ $url -regex-match "^http://.+\..{2,3}$" || $url -regex-match ".+\..{2,3}$" || $url -regex-match ".+\..+/.+" ]] \
+        #&& [[ ! $url == /*   ]] \
+        #&& [[ ! $url == ./* ]] \
+        #&& return 0
+    #return 1
+}
+
+mecho(){
+    #detect if being invoked through dmenu or terminal - use zenity or stdout
+    #based on that
+    if [[ -t 1 ]];then
+        output="cat"
+    else
+        output="zenity --text-info --height 400 --width 680"
+    fi
+    echo "$@" | ${=output}
+}
+
+spath(){
+    for dir in $(tr ':' '\n' <<< $PATH);do
+        find $dir -maxdepth 1 -type f | /bin/grep -i --color ".*lock.*"
+    done
+}
+
+task()
+{
+if [[ -z $1 || $1 == "add" ]];then
+    echo "Name"
+    read name
+    file="$HOME/.tasks/${name// /-}"
+    #touch $file
+    echo "Description:"
+    read desc
+    echo "$desc" >! "${=file}.remain"
+else
+    echo "Task list"
+    counter=1
+    for i in $(ls -A ~/.tasks/*.remain);do
+        echo -e "\n\nTask #$counter: ${=i}"
+        echo "Description:"
+        cat "${=i}"
+        echo -e "\n\n"
+        echo "Is this task done?(y/N)"
+        read -q && mv ${=i} ${=i:r}.done
+        counter=$(($counter+1))
+    done
+fi
+
+}
+
+comcache(){
+export PATH="/usr/lib/ccache/bin/:$PATH"
+}
+
+ad2que(){
+    trap 'break' INT
+    local tset
+    local input
+    while :;do
+        read $input
+        if ! which =$input[(w)1] &>/dev/null;then
+            input="shellrun $input"
+        fi
+        tset="$tset
+        $input"
+    done
+    echo "$tset" >> ~/.dque
+}
+
+
+xpaste(){
+    file="$1"
+    [[ -z $file ]] &&  file="$HOME/note"
+    var="$(xsel -o)"
+	echo -e "${(qq)var}" >>| ~/.current  >>| $file
+	notify-send "Added note" "${(qq)var}"
+}
+
+wiki() { w=$(dig +short txt "$@".wp.dg.cx); echo "$w" }
+
+less_vim() {
+    =vim -R \
+    -c 'let no_plugin_maps = 1' \
+    -c 'set scrolloff=5' \
+    -c 'runtime! macros/less.vim' \
+    -c 'set foldlevel=999' \
+    -c 'set mouse=h' \
+    -c 'set nonu' \
+    -c 'nmap <ESC>u :nohlsearch<cr>' \
+    "$@"
+}
+
+
+dfilter(){
+    # Should return array
+    dchoice=$( eval $@ | awk '{ print NR,$0 }' | ${=DMENU} | awk '{ print $2 }')
+    echo "$dchoice"
+
+}
+
+mangrep(){
+    /usr/bin/man "$1" | grep -5 "$2"
+}
+
+
+help(){  run-help "$@" || less_vim -c ":/$@/" ~/.zshguide.txt }
+
+disassemble() {
+        emulate -L zsh
+            gcc -pipe -S -o - -O -g $* | as -aldh -o /dev/null
+        }
+
+profile() {
+        ZSH_PROFILE_RC=1 $SHELL "$@"
+}
+
+
+xev(){
+    =xev -id `xdotool getactivewindow`
+}
+
+bash_source() {
+  alias shopt=':'
+  alias _expand=_bash_expand
+  alias _complete=_bash_comp
+  #emulate -L sh
+  setopt kshglob noshglob braceexpand
+  source "$@"
+}
+
+rsudo(){
+echo "$@" | sudo tee
+}
+
+search(){
+    surfraw google "$@"
+}
+
+ins(){
+   if [[ $1 == *xz || $1 == *pkg.tar ]];then
+      sudo pacman -U $1
+   else
+     sudo pacman -S "$@"
+ fi
+}
+
+
+extract() {
+   if [[ -z "$1" ]] ; then
+       print -P "usage: \e[1;36mextract\e[1;0m < filename >"
+       print -P "       Extract the file specified based on the extension"
+   elif [[ -f $1 ]] ; then
+       case ${(L)1} in
+           *.tar.bz2)  tar -jxvf $1    ;;
+           *.tar.xz|*.xz)   tar -xvf $1    ;;
+           *.tar.gz)   tar -zxvf $1    ;;
+           *.bz2)      bunzip2 $1       ;;
+           *.gz)       gunzip $1       ;;
+           *.jar)      unzip $1       ;;
+           *.rar)      unrar x $1       ;;
+           *.tar)      tar -xvf $1       ;;
+           *.tbz2)     tar -jxvf $1    ;;
+           *.tgz)      tar -zxvf $1    ;;
+           *.zip)      unzip $1          ;;
+           *.Z)        uncompress $1    ;;
+           *)          echo "Unable to extract '$1' :: Unknown extension"
+       esac
+   else
+       echo "File ('$1') does not exist!"
+   fi
+
+}
+
+pacnews()
+{
+    for n in /etc/**/*.pacnew; do 
+        if [[ -r ${n%.*} ]]; then 
+            sudo vimdiff $n ${n%.*} &&
+            echo "Replace?"; read -q && sudo mv $n ${n%.*}
+        fi 
+    done
+}
+
+dlink(){
+    curl -s "$@" | /usr/bin/w3m -dump -T text/html
+}
+
+H-Glob() {
+    echo -e "
+    /      directories
+    .      plain files
+    @      symbolic links
+    =      sockets
+    p      named pipes (FIFOs)
+    *      executable plain files (0100)
+    %      device files (character or block special)
+    %b     block special files
+    %c     character special files
+    r      owner-readable files (0400)
+    w      owner-writable files (0200)
+    x      owner-executable files (0100)
+    A      group-readable files (0040)
+    I      group-writable files (0020)
+    E      group-executable files (0010)
+    R      world-readable files (0004)
+    W      world-writable files (0002)
+    X      world-executable files (0001)
+    s      setuid files (04000)
+    S      setgid files (02000)
+    t      files with the sticky bit (01000)
+
+  print *(m-1)          # Files modified up to a day ago
+  print *(a1)           # Files accessed a day ago
+  print *(@)            # Just symlinks
+  print *(Lk+50)        # Files bigger than 50 kilobytes
+  print *(Lk-50)        # Files smaller than 50 kilobytes
+  print **/*.c          # All *.c files recursively starting in \$PWD
+  print **/*.c~file.c   # Same as above, but excluding 'file.c'
+  print (foo|bar).*     # Files starting with 'foo' or 'bar'
+  print *~*.*           # All Files that do not contain a dot
+  chmod 644 *(.^x)      # make all plain non-executable files publically readable
+  print -l *(.c|.h)     # Lists *.c and *.h
+  print **/*(g:users:)  # Recursively match all files that are owned by group 'users'
+  echo /proc/*/cwd(:h:t:s/self//) # Analogous to >ps ax | awk '{print $1}'<"
+}
+#alias help-zshglob=H-Glob
+function lsnew () {
+    if [[ $1 = "" ]]; then
+        lsnew_glob="*"
+    else
+        lsnew_glob=$1
+    fi
+    ls -tr -dl $~lsnew_glob(om[1,30])
+}
+alias lsnew='noglob lsnew'
+
+
+#function command_not_found_handler(){
+    #if which $=@ &>/dev/null;then
+        #echo "#!/bin/zsh" >| /tmp/.zshfunc
+        #which $=@ >> /tmp/.zshfunc
+        #/tmp/.zshfunc
+        #return 0
+    #else
+        #echo "$0 not found"
+        #return 127
+    #fi
+#}
+
+#function news(){
+#tmux join-pane -s uake:$(~/bin/tnum newsbeuter) -p 80
+#}
+#
+#function mutt(){
+#tmux join-pane -s nether:$(~/bin/tnum mutt) -p 80
+#}
+#
+#function ncm(){
+#tmux join-pane -s uake:$(~/bin/tnum ncmpcpp) -p 75
+#}
+#
+
+function {news,mutt,ncm,vim,weechat,weechat-curses,newsbeuter,ncmpcpp,atop,rtorrent,torrent} {
+	: ${(AA)muxaliases:=${(z)MUXAL}}
+    if [[ -z $TMUX || $1 == -f ]];then
+    	[[ $1 == -f ]] && shift
+    	if test $muxaliases[$0];then
+    		=$muxaliases[$0] "$@"
+    	else
+    		=$0 "$@"
+    	fi
+    	return
+    fi
+	app=$0
+
+	if [[ $app == vim ]];then
+		vimote tabnew $@
+		return
+	fi
+
+	: ${(AA)appMap:=${(z)WSETS}}
+	winum=$(~/bin/tux tnum $app)
+
+	if [[ $? != 0 ]];then
+		print "Failed"
+		return
+	fi
+
+    tmux join-pane -s $appMap[$app]:$winum -p 80 
+    if [[ $? -ne 0 ]];then
+    	 $0 -f "$@"
+	fi
+
+#    if [[ -n $1 ]];then
+#		$muxaliases[$app] $@ 
+#	fi
+}
+
+function {reboot,sdown} {
+    typeset -A map
+    map=(sdown '/sbin/shutdown -h now' reboot 'command reboot')
+    command=$0
+    echo "Sure y/N"
+    if read -q;then
+    	~/bin/down 
+    	eval "$=map[$command]"
+    fi
+}
+
+# vim: set ft=sh ts=4 sw=4 foldmethod=syntax tw=80 noet: 

@@ -1,0 +1,16 @@
+#!/bin/zsh
+#device="/proc/acpi/video/PEGP/LCD/brightness"
+device="/sys/devices/virtual/backlight/acpi_video0/brightness"
+# 1 2 3
+#typeset -a avl
+#avl=($(head -1 $device | cut -d ' ' -f 2-))
+
+value=$(tail -1  $device )
+#index=$avl[(I)$value]
+
+
+if [[ $1 = up ]];then value=$(( value+1 ));fi
+if [[ $1 = down ]];then value=$(( value-1 ));fi
+
+
+echo -n $value >| $device 

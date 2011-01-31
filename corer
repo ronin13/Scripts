@@ -1,0 +1,28 @@
+#!/bin/zsh
+
+
+>| /tmp/.core
+
+args="$@"
+
+params=(${(s|:|)args})
+
+CORE_DIR="/home/raghavendra/Arch/cores/"
+
+temp=($CORE_DIR/*)
+
+if [[ $#temp > 20 ]];then 
+    echo "NO CORE  file for now. Space isn't infinite" >>| ~/Arch/.cores
+    rm /tmp/.core
+else
+    mv /tmp/.core ~/Arch/cores/$args.core
+fi
+echo "Time $(date -d @$params[1]):
+
+          File $params[2]
+    with  PID  $params[3]
+and killed by  $params[4]
+Moved into  ~/Arch/cores/$args.core " >>| ~/Arch/.cores
+
+echo "==========================
+      ===========================" >>| ~/Arch/.cores

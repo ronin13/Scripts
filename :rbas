@@ -1,0 +1,6 @@
+#!/bin/zsh -i
+#. ~/.bashrc
+#. ~/bin/functions
+#. ~/.bash_alias
+#result=`"$@"`
+"$@" | tr -d '*' | zenity --text-info --height 400 --width 680

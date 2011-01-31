@@ -1,0 +1,11 @@
+#!/bin/zsh
+
+file="$HOME/.newsbeuter/urls"
+lines=$(wc -l $file | cut -d " " -f 1)
+linum=$(( $RANDOM%$lines ))
+url=$(sed -n -e ${linum}p $file | awk '{ print $1 }')
+dbfile="$HOME/.local/share/newsbeuter/cache.db"
+
+sqlite3 -separator ' | ' $dbfile "select title,url from rss_item where feedurl='$url' ORDER BY pubDate DESC LIMIT 5;" |\
+    sed -n -e $(( $RANDOM % 5 + 1 ))p
+

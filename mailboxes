@@ -6,8 +6,11 @@ pushd -q ~/Mail/Kronos/
 [[ $PWD == */Mail/Kronos ]] && find . -type d -mtime +30 -exec rm -rf {} \;
 popd -q
 
-today=$(date +%d-%m-%Y)
-yesterday=$(date --date='1 day ago' +%d-%m-%Y)
+#today=$(date +%d-%m-%Y)
+#yesterday=$(date --date='1 day ago' +%d-%m-%Y)
+
+today=$(date +%Y-%m-%d)
+yesterday=$(date --date='1 day ago' +%Y-%m-%d)
 
 if [[ ! ${$(readlink ~/Mail/Kronos/Today):t} == $today \
     || ! ${$(readlink ~/Mail/Kronos/Yesterday/):t} == $yesterday  ]];then 
@@ -20,10 +23,18 @@ fi
 
 echo "~/Mail/Kronos/Today \
     ~/Mail/Kronos/Yesterday \
+    ~/Mail/INBOX/ \
+    ~/Mail/Me/ \
+    ~/Mail/Dyne/ \
+    ~/Mail/Wnohang/ \
+    ~/Mail/Search/ \
+    ~/Mail/Yahoo/ \
+    ~/Mail/Kronos/ \
+    ~/Mail/Sent/ \
     $(find ~/Mail/ -type d -name new -printf '%d:%C@:%h \n'  \
     | sort -t : -k 1,2 -r  \
     | cut -d : -f 3 \
-    |  grep -v -E '(Chro|Old|Junk|Kro)' \
+    |  /bin/grep -v -E '(Chro|Old|Junk|Kro|INBOX|Search|Dyne|Wnohang|Yahoo|Sent|Me|Archive)' \
     | tr '\n' ' ' \
     |  tr -s ' ')"
 

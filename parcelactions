@@ -1,0 +1,7 @@
+#!/bin/bash
+if [[ $1 =~ ^http:.* ]];then
+    #firefox -remote "openurl($@)"
+    suz "$@"
+else
+    notify-send "$@ copied" 
+fi

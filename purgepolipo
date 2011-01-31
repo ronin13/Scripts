@@ -1,0 +1,6 @@
+#!/bin/sh
+
+kill -USR1 polipo-pid
+sleep 1
+polipo -x
+kill -USR2 polipo-pid

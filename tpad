@@ -1,0 +1,7 @@
+#!/bin/zsh
+
+current=$(synclient -l | grep TouchpadOff | awk '{ print $3 }')
+
+current=$(( ~$current + 2 ))
+
+synclient TouchpadOff=$current 

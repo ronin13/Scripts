@@ -1,0 +1,16 @@
+#!/bin/zsh
+set -x
+
+failed(){
+echo "Failed!"
+exit 1
+}
+
+#PORT=$(( (RANDOM+2000)%65536 ))
+PORT=14770
+ps auxww | =grep -i wnohang | =grep -i ssh | =grep -v grep ||  lsof -i:$PORT || ssh -f -i ~/.ssh/authorized_keys -p 8193 -ND $PORT sate@wnohang.net || failed
+#export HTTP_PROXY="127.0.0.1:$PORT"
+tsocks luakit http://lwn.net
+
+
+set +x
